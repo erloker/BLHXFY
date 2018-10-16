@@ -9888,6 +9888,7 @@
 	}
 
 	const chatMap = new Map();
+	const nChatMap = new Map();
 	let loaded$8 = false;
 
 	const trim$5 = str => {
@@ -9907,21 +9908,37 @@
 	    const list = parseCsv(csv);
 	    list.forEach(item => {
 	      const id = trim$5(item.id);
+	      const text = trim$5(item.text);
 	      const trans = trim$5(item.trans);
 
 	      if (id && trans) {
-	        chatMap.set(id, trans);
+	        if (/\d+-n/.test(id)) {
+	          const rgs = id.match(/(\d+)-n/);
+	          const _id = rgs[1];
+	          nChatMap.set(_id, {
+	            text,
+	            trans
+	          });
+	        } else {
+	          chatMap.set(id, trans);
+	        }
 	      }
 	    });
 	    loaded$8 = true;
 	  }
 
-	  return chatMap;
+	  return {
+	    chatMap,
+	    nChatMap
+	  };
 	};
 
 	async function transChat(data) {
 	  if (!data.chat) return data;
-	  const chatMap = await getChatData();
+	  const {
+	    chatMap,
+	    nChatMap
+	  } = await getChatData();
 
 	  for (let key in data.chat) {
 	    let item = data.chat[key];
@@ -9930,7 +9947,23 @@
 	      let id = item[ck].chat_id;
 
 	      if (chatMap.has(id)) {
-	        item[ck].text = chatMap.get(id);
+	        let hasSpecialTrans = false;
+
+	        if (nChatMap.has(id)) {
+	          const {
+	            text,
+	            trans
+	          } = nChatMap.get(id);
+
+	          if (item[ck].text === text) {
+	            item[ck].text = trans;
+	            hasSpecialTrans = true;
+	          }
+	        }
+
+	        if (!hasSpecialTrans) {
+	          item[ck].text = chatMap.get(id);
+	        }
 	      }
 	    }
 	  }

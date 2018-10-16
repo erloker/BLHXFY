@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      0.12.3
+// @version      0.12.4
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -13991,6 +13991,7 @@
   }
 
   var chatMap = new Map();
+  var nChatMap = new Map();
   var loaded$8 = false;
 
   var trim$5 = function trim(str) {
@@ -14036,16 +14037,29 @@
               list = parseCsv(csv);
               list.forEach(function (item) {
                 var id = trim$5(item.id);
+                var text = trim$5(item.text);
                 var trans = trim$5(item.trans);
 
                 if (id && trans) {
-                  chatMap.set(id, trans);
+                  if (/\d+-n/.test(id)) {
+                    var rgs = id.match(/(\d+)-n/);
+                    var _id = rgs[1];
+                    nChatMap.set(_id, {
+                      text: text,
+                      trans: trans
+                    });
+                  } else {
+                    chatMap.set(id, trans);
+                  }
                 }
               });
               loaded$8 = true;
 
             case 12:
-              return _context.abrupt("return", chatMap);
+              return _context.abrupt("return", {
+                chatMap: chatMap,
+                nChatMap: nChatMap
+              });
 
             case 13:
             case "end":
@@ -14068,7 +14082,8 @@
     _transChat = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee(data) {
-      var chatMap, key, item, ck, id;
+      var _ref, chatMap, nChatMap, key, item, ck, id, hasSpecialTrans, _nChatMap$get, text, trans;
+
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
@@ -14085,7 +14100,9 @@
               return getChatData();
 
             case 4:
-              chatMap = _context.sent;
+              _ref = _context.sent;
+              chatMap = _ref.chatMap;
+              nChatMap = _ref.nChatMap;
 
               for (key in data.chat) {
                 item = data.chat[key];
@@ -14094,14 +14111,27 @@
                   id = item[ck].chat_id;
 
                   if (chatMap.has(id)) {
-                    item[ck].text = chatMap.get(id);
+                    hasSpecialTrans = false;
+
+                    if (nChatMap.has(id)) {
+                      _nChatMap$get = nChatMap.get(id), text = _nChatMap$get.text, trans = _nChatMap$get.trans;
+
+                      if (item[ck].text === text) {
+                        item[ck].text = trans;
+                        hasSpecialTrans = true;
+                      }
+                    }
+
+                    if (!hasSpecialTrans) {
+                      item[ck].text = chatMap.get(id);
+                    }
                   }
                 }
               }
 
               return _context.abrupt("return", data);
 
-            case 7:
+            case 9:
             case "end":
               return _context.stop();
           }
