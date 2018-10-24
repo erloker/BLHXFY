@@ -60,7 +60,7 @@ path,text,trans,count
 /lobby/content/room,あと<%= can_quest_start_count %>回挑戦します（全<%= max_quest_start_count %>回）,还剩<%= can_quest_start_count %>回挑战（一共<%= max_quest_start_count %>回）,
 /lobby/content/room,このクエストに挑戦します。,准备挑战这个任务,2
 /lobby/content/room,マルチバトルの難易度を選択してください,请选择多人战的难度级别,
-/lobby/content/roを選択してください,请选择一个活动副本,
+/lobby/content/room,を選択してください,请选择一个活动副本,
 /lobby/content/room,サポーターを選択してください。,请选择支援召唤石,3
 /lobby/content/room,サポーターに選択できるメンバーがいません。,没有可供选择召唤石的成员,2
 /lobby/content/room,<%= set_user.name %> Rank <%= set_user.rank %> が選択,<%= set_user.name %> Rank <%= set_user.rank %> 选择任务,2
@@ -188,7 +188,7 @@ path,text,trans,count
 /shop_exchange/content/list,四象降臨,四象降临,
 /shop_exchange/content/list,究竟の証,究竟之证,
 /shop_exchange/content/list,ショップTOPへ,返回商店首页,
-/shop_exchange/content/li一覧に戻る,回到活动列表,
+/shop_exchange/content/list,一覧に戻る,回到活动列表,
 /shop_exchange/content/list,マグナアニマ,玛格纳精魄,
 /shop_exchange/content/list,制限なし,没有限制,2
 /shop_exchange/content/list,交換する,交换,4
