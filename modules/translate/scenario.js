@@ -143,9 +143,15 @@ const cloneScenario = (data) => {
 }
 
 const transStart = async (data, uid, pathname) => {
-  const pathRst = pathname.match(/\/scenario.*?\/(scene[^\/]+)\/?/)
+  const pathRst = pathname.match(/\/[^/]*?scenario.*?\/(scene[^\/]+)\/?/)
   if (!pathRst || !pathRst[1]) return data
-  const scenarioName = pathRst[1]
+  let sNameTemp = pathRst[1]
+  if (pathRst[1].includes('birthday')) {
+    let rst = pathname.match(/\/[^/]*?scenario.*?\/(scene.+)$/)
+    if (!rst || !rst[1]) return data
+    sNameTemp = rst[1]
+  }
+  const scenarioName = sNameTemp
   const currentUser = users.get(uid)
   const lang = currentUser ? currentUser.lang : 'jp'
   const userName = currentUser ? currentUser.name : CONFIG.yourName
@@ -208,6 +214,10 @@ module.exports = async (res, uid, pathname) => {
   } else if (Array.isArray(res.scene_list)) {
     return Object.assign(res, {
       scene_list: await transStart(res.scene_list, uid, pathname)
+    })
+  } else if (Array.isArray(res.scenario)) {
+    return Object.assign(res, {
+      scenario: await transStart(res.scenario, uid, pathname)
     })
   } else {
     return res
