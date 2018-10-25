@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.0.2
+// @version      1.0.3
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -7383,15 +7383,16 @@
 	      valNext = next[key];
 	    }
 
-	    if (valNext && valPrev) {
-	      if (valNext.length > valPrev.length) {
-	        return 1;
-	      } else if (valPrev.length > valNext.length) {
-	        return -1;
-	      }
-	    }
+	    if (!valNext) valNext = '';
+	    if (!valPrev) valPrev = '';
 
-	    return 0;
+	    if (valNext.length > valPrev.length) {
+	      return 1;
+	    } else if (valPrev.length > valNext.length) {
+	      return -1;
+	    } else {
+	      return 0;
+	    }
 	  });
 	};
 
@@ -10113,7 +10114,7 @@
 	  if (pathRst[1].includes('birthday')) {
 	    let rst = pathname.match(/\/[^/]*?scenario.*?\/(scene.+)$/);
 	    if (!rst || !rst[1]) return data;
-	    sNameTemp = rst[1];
+	    sNameTemp = rst[1].replace(/\//g, '_');
 	  }
 
 	  insertToolHtml();
@@ -10152,6 +10153,10 @@
 	  } else if (Array.isArray(data.scene_list)) {
 	    return Object.assign(data, {
 	      scene_list: await transStart(data.scene_list, pathname)
+	    });
+	  } else if (Array.isArray(data.scenario)) {
+	    return Object.assign(data, {
+	      scenario: await transStart(data.scenario, pathname)
 	    });
 	  } else {
 	    return data;

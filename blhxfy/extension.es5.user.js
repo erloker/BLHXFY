@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.0.2
+// @version      1.0.3
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -1024,7 +1024,7 @@
     return store[key] || (store[key] = value !== undefined ? value : {});
   })('versions', []).push({
     version: _core.version,
-    mode: _library ? 'pure' : 'global',
+    mode: 'global',
     copyright: '© 2018 Denis Pushkarev (zloirock.ru)'
   });
   });
@@ -5409,7 +5409,7 @@
 
   var defineProperty = _objectDp.f;
   var _wksDefine = function (name) {
-    var $Symbol = _core.Symbol || (_core.Symbol = _library ? {} : _global.Symbol || {});
+    var $Symbol = _core.Symbol || (_core.Symbol = _global.Symbol || {});
     if (name.charAt(0) != '_' && !(name in $Symbol)) defineProperty($Symbol, name, { value: _wksExt.f(name) });
   };
 
@@ -10023,15 +10023,16 @@
         valNext = next[key];
       }
 
-      if (valNext && valPrev) {
-        if (valNext.length > valPrev.length) {
-          return 1;
-        } else if (valPrev.length > valNext.length) {
-          return -1;
-        }
-      }
+      if (!valNext) valNext = '';
+      if (!valPrev) valPrev = '';
 
-      return 0;
+      if (valNext.length > valPrev.length) {
+        return 1;
+      } else if (valPrev.length > valNext.length) {
+        return -1;
+      } else {
+        return 0;
+      }
     });
   };
 
@@ -12856,7 +12857,7 @@
               return _context2.abrupt("return", data);
 
             case 8:
-              sNameTemp = rst[1];
+              sNameTemp = rst[1].replace(/\//g, '_');
 
             case 9:
               insertToolHtml();
@@ -12958,9 +12959,27 @@
               return _context3.abrupt("return", _context3.t0.assign.call(_context3.t0, _context3.t1, _context3.t3));
 
             case 16:
+              if (!Array.isArray(data.scenario)) {
+                _context3.next = 26;
+                break;
+              }
+
+              _context3.t4 = Object;
+              _context3.t5 = data;
+              _context3.next = 21;
+              return transStart(data.scenario, pathname);
+
+            case 21:
+              _context3.t6 = _context3.sent;
+              _context3.t7 = {
+                scenario: _context3.t6
+              };
+              return _context3.abrupt("return", _context3.t4.assign.call(_context3.t4, _context3.t5, _context3.t7));
+
+            case 26:
               return _context3.abrupt("return", data);
 
-            case 17:
+            case 27:
             case "end":
               return _context3.stop();
           }
