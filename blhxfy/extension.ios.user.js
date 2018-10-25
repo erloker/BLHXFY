@@ -32,7 +32,7 @@
 	  return store[key] || (store[key] = value !== undefined ? value : {});
 	})('versions', []).push({
 	  version: _core.version,
-	  mode: 'global',
+	  mode: _library ? 'pure' : 'global',
 	  copyright: '© 2018 Denis Pushkarev (zloirock.ru)'
 	});
 	});
@@ -9950,6 +9950,10 @@
 	  return csv;
 	};
 
+	const splitSingleLineSkill = csv => {
+	  return csv.replace(/\s(skill|special|npc|support|intro|,|active)/g, '\n$1');
+	};
+
 	const txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
 
 	const getScenario = async name => {
@@ -10088,10 +10092,18 @@
 	};
 
 	const transStart = async (data, pathname) => {
-	  const pathRst = pathname.match(/\/scenario.*?\/(scene[^\/]+)\/?/);
+	  const pathRst = pathname.match(/\/[^/]*?scenario.*?\/(scene[^\/]+)\/?/);
 	  if (!pathRst || !pathRst[1]) return data;
+	  let sNameTemp = pathRst[1];
+
+	  if (pathRst[1].includes('birthday')) {
+	    let rst = pathname.match(/\/[^/]*?scenario.*?\/(scene.+)$/);
+	    if (!rst || !rst[1]) return data;
+	    sNameTemp = rst[1];
+	  }
+
 	  insertToolHtml();
-	  const scenarioName = pathRst[1];
+	  const scenarioName = sNameTemp;
 	  scenarioCache.data = cloneDeep_1(data);
 	  scenarioCache.name = scenarioName;
 	  scenarioCache.hasTrans = false;
@@ -10300,6 +10312,31 @@
 	  return state;
 	};
 
+	const getLocalSkillData = npcId => {
+	  const str = sessionStorage.getItem('blhxfy:skill-preview');
+
+	  if (str) {
+	    try {
+	      const data = JSON.parse(str);
+
+	      if (data.id === npcId) {
+	        const list = parseCsv(data.csv);
+	        list.forEach(item => {
+	          if (item.id === 'npc') {
+	            item.detail = npcId;
+	          }
+	        });
+	        setSkillMap(list);
+	        return state;
+	      }
+	    } catch (err) {
+	      console.error(err);
+	    }
+	  }
+
+	  return false;
+	};
+
 	function replaceTurn (str) {
 	  return str.replace('ターン', '回合').replace('turns', '回合').replace('turn', '回合').replace('Cooldown:', '使用间隔:').replace('使用間隔:', '使用间隔:');
 	}
@@ -10454,6 +10491,25 @@
 	  }
 	};
 
+	const previewSkill = npcId => {
+	  $('#cnt-detail').off('click.blhxfy').on('click.blhxfy', '.prt-evolution-star>div:eq(1)', function () {
+	    const csv = window.prompt('粘贴要预览的技能翻译CSV文本');
+
+	    if (csv) {
+	      sessionStorage.setItem('blhxfy:skill-preview', JSON.stringify({
+	        id: npcId,
+	        csv: splitSingleLineSkill(csv)
+	      }));
+	      location.reload();
+	    }
+	  }).on('click.blhxfy', '.prt-evolution-star>div:eq(2)', function () {
+	    if (confirm('清除技能预览？')) {
+	      sessionStorage.removeItem('blhxfy:skill-preview');
+	      location.reload();
+	    }
+	  });
+	};
+
 	const parseSkill = async (data, pathname) => {
 	  let npcId;
 
@@ -10466,8 +10522,13 @@
 	  }
 
 	  await parseBuff(data);
-	  const skillState = await getSkillData(npcId);
-	  if (!skillState) return data;
+	  previewSkill(npcId);
+	  let skillState = getLocalSkillData(npcId);
+
+	  if (!skillState) {
+	    skillState = await getSkillData(npcId);
+	  }
+
 	  const skillData = skillState.skillMap.get(npcId);
 	  const translated = new Map();
 	  const keys = skillState.skillKeys;
@@ -10650,7 +10711,7 @@
 
 	    const list = parseCsv(csv);
 	    const tempMap = new Map();
-	    sortKeywords(list, 'text').forEach(item => {
+	    sortKeywords(list, 'text').forEach((item, index) => {
 	      const pathname = trim$1(item.path);
 	      const text = trim$1(item.text);
 	      const trans = trim$1(item.trans);
@@ -10661,13 +10722,15 @@
 	          tempMap.get(pathname).push({
 	            text,
 	            trans,
-	            times
+	            times,
+	            index
 	          });
 	        } else {
 	          tempMap.set(pathname, [{
 	            text,
 	            trans,
-	            times
+	            times,
+	            index
 	          }]);
 	        }
 	      }
@@ -10713,24 +10776,26 @@
 
 	const replaceHTML = async (html, pathname) => {
 	  let _html = html;
+	  let theList = [];
 	  const htmlMap = await getCommHtmlData();
 
 	  for (let [key, list] of htmlMap.entries()) {
 	    if (pathname.includes(key)) {
-	      list.forEach(item => {
-	        for (let i = 0; i < item.times; i++) {
-	          let newHtml = _html.replace(item.text, item.trans);
-
-	          if (newHtml !== _html) {
-	            _html = newHtml;
-	          } else {
-	            break;
-	          }
-	        }
-	      });
+	      theList = theList.concat(list);
 	    }
 	  }
 
+	  theList.sort((prev, next) => prev.index - next.index).forEach(item => {
+	    for (let i = 0; i < item.times; i++) {
+	      let newHtml = _html.replace(item.text, item.trans);
+
+	      if (newHtml !== _html) {
+	        _html = newHtml;
+	      } else {
+	        break;
+	      }
+	    }
+	  });
 	  return _html;
 	};
 

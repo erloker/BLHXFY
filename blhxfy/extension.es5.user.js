@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.0.1
+// @version      1.0.2
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -1024,7 +1024,7 @@
     return store[key] || (store[key] = value !== undefined ? value : {});
   })('versions', []).push({
     version: _core.version,
-    mode: 'global',
+    mode: _library ? 'pure' : 'global',
     copyright: '© 2018 Denis Pushkarev (zloirock.ru)'
   });
   });
@@ -5409,7 +5409,7 @@
 
   var defineProperty = _objectDp.f;
   var _wksDefine = function (name) {
-    var $Symbol = _core.Symbol || (_core.Symbol = _global.Symbol || {});
+    var $Symbol = _core.Symbol || (_core.Symbol = _library ? {} : _global.Symbol || {});
     if (name.charAt(0) != '_' && !(name in $Symbol)) defineProperty($Symbol, name, { value: _wksExt.f(name) });
   };
 
@@ -12617,6 +12617,10 @@
     return csv;
   };
 
+  var splitSingleLineSkill = function splitSingleLineSkill(csv) {
+    return csv.replace(/\s(skill|special|npc|support|intro|,|active)/g, '\n$1');
+  };
+
   var txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
 
   var getScenario =
@@ -12819,13 +12823,13 @@
     var _ref2 = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee2(data, pathname) {
-      var pathRst, scenarioName, _ref3, transMap, csv, nameData, nameMap;
+      var pathRst, sNameTemp, rst, scenarioName, _ref3, transMap, csv, nameData, nameMap;
 
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
-              pathRst = pathname.match(/\/scenario.*?\/(scene[^\/]+)\/?/);
+              pathRst = pathname.match(/\/[^/]*?scenario.*?\/(scene[^\/]+)\/?/);
 
               if (!(!pathRst || !pathRst[1])) {
                 _context2.next = 3;
@@ -12835,33 +12839,53 @@
               return _context2.abrupt("return", data);
 
             case 3:
-              insertToolHtml();
-              scenarioName = pathRst[1];
-              scenarioCache.data = cloneDeep_1(data);
-              scenarioCache.name = scenarioName;
-              scenarioCache.hasTrans = false;
-              _context2.next = 10;
-              return getScenario(scenarioName);
+              sNameTemp = pathRst[1];
 
-            case 10:
-              _ref3 = _context2.sent;
-              transMap = _ref3.transMap;
-              csv = _ref3.csv;
+              if (!pathRst[1].includes('birthday')) {
+                _context2.next = 9;
+                break;
+              }
 
-              if (transMap) {
-                _context2.next = 15;
+              rst = pathname.match(/\/[^/]*?scenario.*?\/(scene.+)$/);
+
+              if (!(!rst || !rst[1])) {
+                _context2.next = 8;
                 break;
               }
 
               return _context2.abrupt("return", data);
 
-            case 15:
+            case 8:
+              sNameTemp = rst[1];
+
+            case 9:
+              insertToolHtml();
+              scenarioName = sNameTemp;
+              scenarioCache.data = cloneDeep_1(data);
+              scenarioCache.name = scenarioName;
+              scenarioCache.hasTrans = false;
+              _context2.next = 16;
+              return getScenario(scenarioName);
+
+            case 16:
+              _ref3 = _context2.sent;
+              transMap = _ref3.transMap;
+              csv = _ref3.csv;
+
+              if (transMap) {
+                _context2.next = 21;
+                break;
+              }
+
+              return _context2.abrupt("return", data);
+
+            case 21:
               scenarioCache.hasTrans = true;
               scenarioCache.csv = csv;
-              _context2.next = 19;
+              _context2.next = 25;
               return getNameData();
 
-            case 19:
+            case 25:
               nameData = _context2.sent;
               nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
               data.forEach(function (item) {
@@ -12879,7 +12903,7 @@
               });
               return _context2.abrupt("return", data);
 
-            case 23:
+            case 29:
             case "end":
               return _context2.stop();
           }
@@ -13389,6 +13413,31 @@
     };
   }();
 
+  var getLocalSkillData = function getLocalSkillData(npcId) {
+    var str = sessionStorage.getItem('blhxfy:skill-preview');
+
+    if (str) {
+      try {
+        var data = JSON.parse(str);
+
+        if (data.id === npcId) {
+          var list = parseCsv(data.csv);
+          list.forEach(function (item) {
+            if (item.id === 'npc') {
+              item.detail = npcId;
+            }
+          });
+          setSkillMap(list);
+          return state;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    return false;
+  };
+
   function replaceTurn (str) {
     return str.replace('ターン', '回合').replace('turns', '回合').replace('turn', '回合').replace('Cooldown:', '使用间隔:').replace('使用間隔:', '使用间隔:');
   }
@@ -13773,6 +13822,25 @@
     };
   }();
 
+  var previewSkill = function previewSkill(npcId) {
+    $('#cnt-detail').off('click.blhxfy').on('click.blhxfy', '.prt-evolution-star>div:eq(1)', function () {
+      var csv = window.prompt('粘贴要预览的技能翻译CSV文本');
+
+      if (csv) {
+        sessionStorage.setItem('blhxfy:skill-preview', JSON.stringify({
+          id: npcId,
+          csv: splitSingleLineSkill(csv)
+        }));
+        location.reload();
+      }
+    }).on('click.blhxfy', '.prt-evolution-star>div:eq(2)', function () {
+      if (confirm('清除技能预览？')) {
+        sessionStorage.removeItem('blhxfy:skill-preview');
+        location.reload();
+      }
+    });
+  };
+
   var parseSkill =
   /*#__PURE__*/
   function () {
@@ -13823,38 +13891,39 @@
               return parseBuff(data);
 
             case 12:
-              _context2.next = 14;
-              return getSkillData(npcId);
-
-            case 14:
-              skillState = _context2.sent;
+              previewSkill(npcId);
+              skillState = getLocalSkillData(npcId);
 
               if (skillState) {
-                _context2.next = 17;
+                _context2.next = 18;
                 break;
               }
 
-              return _context2.abrupt("return", data);
+              _context2.next = 17;
+              return getSkillData(npcId);
 
             case 17:
+              skillState = _context2.sent;
+
+            case 18:
               skillData = skillState.skillMap.get(npcId);
               translated = new Map();
               keys = skillState.skillKeys;
 
               if (!skillData) {
-                _context2.next = 69;
+                _context2.next = 70;
                 break;
               }
 
               _iteratorNormalCompletion3 = true;
               _didIteratorError3 = false;
               _iteratorError3 = undefined;
-              _context2.prev = 24;
+              _context2.prev = 25;
               _iterator3 = keys[Symbol.iterator]();
 
-            case 26:
+            case 27:
               if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
-                _context2.next = 53;
+                _context2.next = 54;
                 break;
               }
 
@@ -13864,28 +13933,28 @@
               ability = data[key1];
 
               if (ability) {
-                _context2.next = 37;
+                _context2.next = 38;
                 break;
               }
 
               if (data.ability) {
-                _context2.next = 34;
+                _context2.next = 35;
                 break;
               }
 
-              return _context2.abrupt("continue", 50);
+              return _context2.abrupt("continue", 51);
 
-            case 34:
+            case 35:
               ability = data.ability[key1];
 
               if (ability) {
-                _context2.next = 37;
+                _context2.next = 38;
                 break;
               }
 
-              return _context2.abrupt("continue", 50);
+              return _context2.abrupt("continue", 51);
 
-            case 37:
+            case 38:
               if (ability.recast_comment) {
                 ability.recast_comment = replaceTurn(ability.recast_comment);
               }
@@ -13894,34 +13963,34 @@
               _trans4 = skillData["skill-".concat(ability.name)];
 
               if (_trans4) {
-                _context2.next = 48;
+                _context2.next = 49;
                 break;
               }
 
               _trans4 = skillData["special-".concat(ability.name)];
 
               if (_trans4) {
-                _context2.next = 48;
+                _context2.next = 49;
                 break;
               }
 
               _trans4 = skillData[key2 + plus2];
 
               if (_trans4) {
-                _context2.next = 48;
+                _context2.next = 49;
                 break;
               }
 
               _trans4 = skillData[key2];
 
               if (_trans4) {
-                _context2.next = 48;
+                _context2.next = 49;
                 break;
               }
 
-              return _context2.abrupt("continue", 50);
+              return _context2.abrupt("continue", 51);
 
-            case 48:
+            case 49:
               if (_trans4.name) {
                 ability.name = _trans4.name + plus1;
               }
@@ -13931,46 +14000,46 @@
                 translated.set(key1, true);
               }
 
-            case 50:
+            case 51:
               _iteratorNormalCompletion3 = true;
-              _context2.next = 26;
+              _context2.next = 27;
               break;
 
-            case 53:
-              _context2.next = 59;
+            case 54:
+              _context2.next = 60;
               break;
 
-            case 55:
-              _context2.prev = 55;
-              _context2.t0 = _context2["catch"](24);
+            case 56:
+              _context2.prev = 56;
+              _context2.t0 = _context2["catch"](25);
               _didIteratorError3 = true;
               _iteratorError3 = _context2.t0;
 
-            case 59:
-              _context2.prev = 59;
+            case 60:
               _context2.prev = 60;
+              _context2.prev = 61;
 
               if (!_iteratorNormalCompletion3 && _iterator3.return != null) {
                 _iterator3.return();
               }
 
-            case 62:
-              _context2.prev = 62;
+            case 63:
+              _context2.prev = 63;
 
               if (!_didIteratorError3) {
-                _context2.next = 65;
+                _context2.next = 66;
                 break;
               }
 
               throw _iteratorError3;
 
-            case 65:
-              return _context2.finish(62);
-
             case 66:
-              return _context2.finish(59);
+              return _context2.finish(63);
 
             case 67:
+              return _context2.finish(60);
+
+            case 68:
               if (data.master) {
                 trans = skillData['npc'];
                 if (trans && trans.name) data.master.name = trans.name;
@@ -13984,7 +14053,7 @@
                 if (_trans3) data.comment = _trans3.detail;
               }
 
-            case 69:
+            case 70:
               keys.forEach(function (item) {
                 if (!translated.get(item[0])) {
                   var skill = data[item[0]];
@@ -13996,12 +14065,12 @@
               });
               return _context2.abrupt("return", data);
 
-            case 71:
+            case 72:
             case "end":
               return _context2.stop();
           }
         }
-      }, _callee2, this, [[24, 55, 59, 67], [60,, 62, 66]]);
+      }, _callee2, this, [[25, 56, 60, 68], [61,, 63, 67]]);
     }));
 
     return function parseSkill(_x2, _x3) {
@@ -14394,7 +14463,7 @@
             case 9:
               list = parseCsv(csv);
               tempMap = new Map();
-              sortKeywords(list, 'text').forEach(function (item) {
+              sortKeywords(list, 'text').forEach(function (item, index) {
                 var pathname = trim$1(item.path);
                 var text = trim$1(item.text);
                 var trans = trim$1(item.trans);
@@ -14405,13 +14474,15 @@
                     tempMap.get(pathname).push({
                       text: text,
                       trans: trans,
-                      times: times
+                      times: times,
+                      index: index
                     });
                   } else {
                     tempMap.set(pathname, [{
                       text: text,
                       trans: trans,
-                      times: times
+                      times: times,
+                      index: index
                     }]);
                   }
                 }
@@ -14503,83 +14574,87 @@
     var _ref = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee(html, pathname) {
-      var _html, htmlMap, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _step$value, key, list;
+      var _html, theList, htmlMap, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _step$value, key, list;
 
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
               _html = html;
-              _context.next = 3;
+              theList = [];
+              _context.next = 4;
               return getCommHtmlData();
 
-            case 3:
+            case 4:
               htmlMap = _context.sent;
               _iteratorNormalCompletion = true;
               _didIteratorError = false;
               _iteratorError = undefined;
-              _context.prev = 7;
+              _context.prev = 8;
 
               for (_iterator = htmlMap.entries()[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                 _step$value = _slicedToArray(_step.value, 2), key = _step$value[0], list = _step$value[1];
 
                 if (pathname.includes(key)) {
-                  list.forEach(function (item) {
-                    for (var i = 0; i < item.times; i++) {
-                      var newHtml = _html.replace(item.text, item.trans);
-
-                      if (newHtml !== _html) {
-                        _html = newHtml;
-                      } else {
-                        break;
-                      }
-                    }
-                  });
+                  theList = theList.concat(list);
                 }
               }
 
-              _context.next = 15;
+              _context.next = 16;
               break;
 
-            case 11:
-              _context.prev = 11;
-              _context.t0 = _context["catch"](7);
+            case 12:
+              _context.prev = 12;
+              _context.t0 = _context["catch"](8);
               _didIteratorError = true;
               _iteratorError = _context.t0;
 
-            case 15:
-              _context.prev = 15;
+            case 16:
               _context.prev = 16;
+              _context.prev = 17;
 
               if (!_iteratorNormalCompletion && _iterator.return != null) {
                 _iterator.return();
               }
 
-            case 18:
-              _context.prev = 18;
+            case 19:
+              _context.prev = 19;
 
               if (!_didIteratorError) {
-                _context.next = 21;
+                _context.next = 22;
                 break;
               }
 
               throw _iteratorError;
 
-            case 21:
-              return _context.finish(18);
-
             case 22:
-              return _context.finish(15);
+              return _context.finish(19);
 
             case 23:
-              return _context.abrupt("return", _html);
+              return _context.finish(16);
 
             case 24:
+              theList.sort(function (prev, next) {
+                return prev.index - next.index;
+              }).forEach(function (item) {
+                for (var i = 0; i < item.times; i++) {
+                  var newHtml = _html.replace(item.text, item.trans);
+
+                  if (newHtml !== _html) {
+                    _html = newHtml;
+                  } else {
+                    break;
+                  }
+                }
+              });
+              return _context.abrupt("return", _html);
+
+            case 26:
             case "end":
               return _context.stop();
           }
         }
-      }, _callee, this, [[7, 11, 15, 23], [16,, 18, 22]]);
+      }, _callee, this, [[8, 12, 16, 24], [17,, 19, 23]]);
     }));
 
     return function replaceHTML(_x, _x2) {
