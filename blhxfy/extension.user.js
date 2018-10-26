@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.0.4
+// @version      1.0.5
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5511,13 +5511,6 @@
 	} = config;
 	let ee = new events();
 	let lecia;
-	window.addEventListener('load', () => {
-	  const iframe = document.createElement('iframe');
-	  iframe.src = `${origin}/blhxfy/lecia.html`;
-	  iframe.style.display = 'none';
-	  document.body.appendChild(iframe);
-	  lecia = iframe.contentWindow;
-	});
 
 	const insertCSS = (name, hash) => {
 	  const link = document.createElement('link');
@@ -5542,10 +5535,18 @@
 	};
 
 	const load = new Promise((rev, rej) => {
-	  let timer = setTimeout(() => {
-	    rej('加载lecia.html超时');
-	    timeoutStyle();
-	  }, config.timeout * 1000);
+	  let timer;
+	  window.addEventListener('load', () => {
+	    const iframe = document.createElement('iframe');
+	    iframe.src = `${origin}/blhxfy/lecia.html`;
+	    iframe.style.display = 'none';
+	    document.body.appendChild(iframe);
+	    lecia = iframe.contentWindow;
+	    timer = setTimeout(() => {
+	      rej('加载lecia.html超时');
+	      timeoutStyle();
+	    }, config.timeout * 1000);
+	  });
 	  ee.once('loaded', () => {
 	    clearTimeout(timer);
 	    rev();

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.0.4
+// @version      1.0.5
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8063,13 +8063,6 @@
   var origin = config.origin;
   var ee = new events();
   var lecia;
-  window.addEventListener('load', function () {
-    var iframe = document.createElement('iframe');
-    iframe.src = "".concat(origin, "/blhxfy/lecia.html");
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-    lecia = iframe.contentWindow;
-  });
 
   var insertCSS = function insertCSS(name, hash) {
     var link = document.createElement('link');
@@ -8090,10 +8083,18 @@
   };
 
   var load = new Promise(function (rev, rej) {
-    var timer = setTimeout(function () {
-      rej('加载lecia.html超时');
-      timeoutStyle();
-    }, config.timeout * 1000);
+    var timer;
+    window.addEventListener('load', function () {
+      var iframe = document.createElement('iframe');
+      iframe.src = "".concat(origin, "/blhxfy/lecia.html");
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      lecia = iframe.contentWindow;
+      timer = setTimeout(function () {
+        rej('加载lecia.html超时');
+        timeoutStyle();
+      }, config.timeout * 1000);
+    });
     ee.once('loaded', function () {
       clearTimeout(timer);
       rev();
