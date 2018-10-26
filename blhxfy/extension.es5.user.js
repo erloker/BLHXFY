@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.0.3
+// @version      1.0.4
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -6882,7 +6882,8 @@
     origin: 'https://blhx.danmu9.com',
     apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
     hash: '',
-    userName: ''
+    userName: '',
+    timeout: 10
   };
 
   var html = ['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr'];
@@ -8070,16 +8071,33 @@
     lecia = iframe.contentWindow;
   });
 
-  var insertCSS = function insertCSS(hash) {
+  var insertCSS = function insertCSS(name, hash) {
     var link = document.createElement('link');
     link.type = 'text/css';
     link.rel = 'stylesheet';
-    link.href = "".concat(origin, "/blhxfy/data/static/style/BLHXFY.css?lecia=").concat(hash);
+    link.href = "".concat(origin, "/blhxfy/data/static/style/").concat(name, ".css?lecia=").concat(hash);
     document.head.appendChild(link);
   };
 
-  var load = new Promise(function (rev) {
-    ee.once('loaded', rev);
+  var timeoutStyleInserted = false;
+
+  var timeoutStyle = function timeoutStyle() {
+    if (timeoutStyleInserted) return;
+    timeoutStyleInserted = true;
+    var style = document.createElement('style');
+    style.innerHTML = "\n  .wrapper .cnt-global-header .prt-head-current {\n    color: #ff6565;\n  }\n  ";
+    document.head.appendChild(style);
+  };
+
+  var load = new Promise(function (rev, rej) {
+    var timer = setTimeout(function () {
+      rej('加载lecia.html超时');
+      timeoutStyle();
+    }, config.timeout * 1000);
+    ee.once('loaded', function () {
+      clearTimeout(timer);
+      rev();
+    });
   });
 
   var fetchData =
@@ -8105,7 +8123,13 @@
                 flag: flag
               }, origin);
               return _context.abrupt("return", new Promise(function (rev, rej) {
+                var timer = setTimeout(function () {
+                  rej("\u52A0\u8F7D".concat(pathname, "\u8D85\u65F6"));
+                  timeoutStyle();
+                }, config.timeout * 1000);
                 ee.once("response".concat(flag), function (data) {
+                  clearTimeout(timer);
+
                   if (data.error) {
                     rej(data.error);
                   } else {
@@ -8132,7 +8156,7 @@
   });
   getHash.then(function (hash) {
     config.hash = hash;
-    insertCSS(hash);
+    insertCSS('BLHXFY', hash);
     return hash;
   });
 
@@ -13440,7 +13464,8 @@
         var data = JSON.parse(str);
 
         if (data.id === npcId) {
-          var list = parseCsv(data.csv);
+          var csv = purify.sanitize(data.csv);
+          var list = parseCsv(csv);
           list.forEach(function (item) {
             if (item.id === 'npc') {
               item.detail = npcId;
@@ -15789,7 +15814,7 @@
     return _translate.apply(this, arguments);
   }
 
-  var start = function start() {
+  var injectXHR = function injectXHR() {
     // The following code are inspired by viramate/external.js
     // intercept xhr request and modify the response
     var XHR = XMLHttpRequest;
@@ -15832,7 +15857,6 @@
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.prev = 0;
                 state = getXhrState(this);
                 state.onLoadEvent = evt;
                 Object.defineProperties(this, {
@@ -15847,35 +15871,28 @@
                     }
                   }
                 });
-                _context.prev = 4;
-                _context.next = 7;
+                _context.prev = 3;
+                _context.next = 6;
                 return translate(state);
 
-              case 7:
-                _context.next = 12;
+              case 6:
+                _context.next = 11;
                 break;
 
-              case 9:
-                _context.prev = 9;
-                _context.t0 = _context["catch"](4);
-                console.error(_context.t0);
+              case 8:
+                _context.prev = 8;
+                _context.t0 = _context["catch"](3);
+                log(_context.t0);
+
+              case 11:
+                state.onload && state.onload.call(this, state.onLoadEvent);
 
               case 12:
-                state.onload && state.onload.call(this, state.onLoadEvent);
-                _context.next = 18;
-                break;
-
-              case 15:
-                _context.prev = 15;
-                _context.t1 = _context["catch"](0);
-                log(_context.t1);
-
-              case 18:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[0, 15], [4, 9]]);
+        }, _callee, this, [[3, 8]]);
       }));
 
       return function customOnLoad(_x) {
@@ -16136,7 +16153,7 @@
 
   var main = function main() {
     if (window.blhxfy) return;
-    start();
+    injectXHR();
     window.blhxfy = {
       dlStoryCsv: dlStoryCsv,
       previewCsv: previewCsv

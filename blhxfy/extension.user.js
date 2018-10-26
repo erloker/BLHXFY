@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.0.3
+// @version      1.0.4
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -4328,7 +4328,8 @@
 	  origin: 'https://blhx.danmu9.com',
 	  apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
 	  hash: '',
-	  userName: ''
+	  userName: '',
+	  timeout: 10
 	};
 
 	var html = ['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr'];
@@ -5518,16 +5519,37 @@
 	  lecia = iframe.contentWindow;
 	});
 
-	const insertCSS = hash => {
+	const insertCSS = (name, hash) => {
 	  const link = document.createElement('link');
 	  link.type = 'text/css';
 	  link.rel = 'stylesheet';
-	  link.href = `${origin}/blhxfy/data/static/style/BLHXFY.css?lecia=${hash}`;
+	  link.href = `${origin}/blhxfy/data/static/style/${name}.css?lecia=${hash}`;
 	  document.head.appendChild(link);
 	};
 
-	const load = new Promise(rev => {
-	  ee.once('loaded', rev);
+	let timeoutStyleInserted = false;
+
+	const timeoutStyle = () => {
+	  if (timeoutStyleInserted) return;
+	  timeoutStyleInserted = true;
+	  const style = document.createElement('style');
+	  style.innerHTML = `
+  .wrapper .cnt-global-header .prt-head-current {
+    color: #ff6565;
+  }
+  `;
+	  document.head.appendChild(style);
+	};
+
+	const load = new Promise((rev, rej) => {
+	  let timer = setTimeout(() => {
+	    rej('加载lecia.html超时');
+	    timeoutStyle();
+	  }, config.timeout * 1000);
+	  ee.once('loaded', () => {
+	    clearTimeout(timer);
+	    rev();
+	  });
 	});
 
 	const fetchData = async pathname => {
@@ -5540,7 +5562,13 @@
 	    flag
 	  }, origin);
 	  return new Promise((rev, rej) => {
+	    let timer = setTimeout(() => {
+	      rej(`加载${pathname}超时`);
+	      timeoutStyle();
+	    }, config.timeout * 1000);
 	    ee.once(`response${flag}`, function (data) {
+	      clearTimeout(timer);
+
 	      if (data.error) {
 	        rej(data.error);
 	      } else {
@@ -5553,7 +5581,7 @@
 	const getHash = fetchData('/blhxfy/manifest.json').then(data => data.hash);
 	getHash.then(hash => {
 	  config.hash = hash;
-	  insertCSS(hash);
+	  insertCSS('BLHXFY', hash);
 	  return hash;
 	});
 
@@ -10339,7 +10367,8 @@
 	      const data = JSON.parse(str);
 
 	      if (data.id === npcId) {
-	        const list = parseCsv(data.csv);
+	        const csv = purify.sanitize(data.csv);
+	        const list = parseCsv(csv);
 	        list.forEach(item => {
 	          if (item.id === 'npc') {
 	            item.detail = npcId;
@@ -11315,7 +11344,7 @@
 	  state.result = isJSON ? JSON.stringify(data) : data;
 	}
 
-	const start = () => {
+	const injectXHR = () => {
 	  // The following code are inspired by viramate/external.js
 	  // intercept xhr request and modify the response
 	  const XHR = XMLHttpRequest;
@@ -11348,36 +11377,30 @@
 	  }
 
 	  const customOnLoad = async function (evt) {
-	    let state;
+	    const state = getXhrState(this);
+	    state.onLoadEvent = evt;
+	    Object.defineProperties(this, {
+	      response: {
+	        get() {
+	          return state.result;
+	        }
+
+	      },
+	      responseText: {
+	        get() {
+	          return state.result;
+	        }
+
+	      }
+	    });
 
 	    try {
-	      state = getXhrState(this);
-	      state.onLoadEvent = evt;
-	      Object.defineProperties(this, {
-	        response: {
-	          get() {
-	            return state.result;
-	          }
-
-	        },
-	        responseText: {
-	          get() {
-	            return state.result;
-	          }
-
-	        }
-	      });
-
-	      try {
-	        await translate(state);
-	      } catch (_err) {
-	        console.error(_err);
-	      }
-
-	      state.onload && state.onload.call(this, state.onLoadEvent);
+	      await translate(state);
 	    } catch (err) {
 	      log(err);
 	    }
+
+	    state.onload && state.onload.call(this, state.onLoadEvent);
 	  };
 
 	  const customOnReadyStateChange = async function () {
@@ -11588,7 +11611,7 @@
 
 	const main = () => {
 	  if (window.blhxfy) return;
-	  start();
+	  injectXHR();
 	  window.blhxfy = {
 	    dlStoryCsv,
 	    previewCsv
