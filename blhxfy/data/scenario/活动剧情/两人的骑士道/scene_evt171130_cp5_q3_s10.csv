@@ -36,7 +36,7 @@ id,en,jp,trans
 50,,うるせえ！<br>俺にかまうな！,烦死了！<br>别管我！
 56,,わっ！,哇！
 57,,……だいじょうぶか。,没事吧……
-58,,うん……ありがと。,没事吧……
+58,,うん……ありがと。,……多谢你。
 59,,<span class='scene-font-katari'>アーサー達の誘導を振り切って</span><br><span class='scene-font-katari'>勝手にどこかへ行ってしまうヘンリー</span>,<span class='scene-font-katari'>亨利离开他们的队伍，</span><br><span class='scene-font-katari'>独自一人不知道去了哪里。</span>
 60,,ひとまずはこっちの受験生達を<br>逃がすのが先決か……,总之现在要先赶紧<br>带考生们离开……
 61,,<span class='scene-font-4'>モルドレッド後ろ！</span>,<span class='scene-font-4'>莫德雷德，后面！</span>
@@ -67,3 +67,4 @@ id,en,jp,trans
 92,,姬塔！<br>援護します！,姬塔！<br>我来援助你！
 96,,<span class='scene-font-katari'>姬塔達と骸の騎士が交戦する</span><br><span class='scene-font-katari'>音を背に聞きながら、受験生達は</span><br><span class='scene-font-katari'>その隙をついて出口へと退避した。</span>,<span class='scene-font-katari'>考生们一边听着姬塔一行人</span><br><span class='scene-font-katari'>与骑士骸骨交战的声音一边撤退。</span>
 info,,1,scene_evt171130_cp5_q3_s10
+,,,
