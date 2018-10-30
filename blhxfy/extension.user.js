@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.0
+// @version      1.1.1
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -11726,7 +11726,7 @@
 	  if (userName) {
 	    content.forEach(item => {
 	      if (item.id === 'info') return;
-	      ['en', 'jp'].forEach(key => {
+	      ['en', 'jp', 'trans'].forEach(key => {
 	        if (!item[key]) return;
 	        let _lang = key;
 	        if (!/^\w+$/.test(userName)) _lang = 'unknown';
