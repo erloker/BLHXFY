@@ -4310,14 +4310,6 @@
 	  return ret;
 	}
 
-	const config = {
-	  origin: 'https://blhx.danmu9.com',
-	  apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
-	  hash: '',
-	  userName: '',
-	  timeout: 10
-	};
-
 	var html = ['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr'];
 
 	// SVG
@@ -5298,6 +5290,85 @@
 
 	var purify = createDOMPurify();
 
+	const trim = str => {
+	  if (!str) return '';
+	  return str.trim();
+	};
+
+	var tryDownload = function (content, filename) {
+	  const eleLink = document.createElement('a');
+	  eleLink.download = filename;
+	  eleLink.style.display = 'none';
+	  const blob = new Blob([content], {
+	    type: 'text/csv'
+	  });
+	  eleLink.href = URL.createObjectURL(blob);
+	  document.body.appendChild(eleLink);
+	  eleLink.click();
+	  document.body.removeChild(eleLink);
+	};
+
+	const replaceWords = (str, map, lang = 'en') => {
+	  if (!str) return str;
+	  let _str = str;
+
+	  for (let [key, val] of map) {
+	    if (!key || key.length < 2) continue;
+	    const expr = key.replace(/\?/g, '\\?').replace(/\./g, '\\.').replace(/\*/g, '\\*').replace(/\+/g, '\\+');
+	    const reStr = lang === 'en' ? `\\b${expr}\\b` : `${expr}`;
+
+	    if (typeof val === 'string') {
+	      _str = _str.replace(new RegExp(reStr, 'g'), val);
+	    } else if (val && val.trans && !val.noun) {
+	      if (val.ignoreCase) {
+	        _str = _str.replace(new RegExp(reStr, 'gi'), val.trans);
+	      } else {
+	        _str = _str.replace(new RegExp(reStr, 'g'), val.trans);
+	      }
+	    }
+	  }
+
+	  return _str;
+	};
+
+	const getPreview = () => {
+	  const str = sessionStorage.getItem('blhxfy:preview');
+	  let data = [];
+
+	  if (str) {
+	    try {
+	      data = JSON.parse(str);
+	    } catch (e) {
+	      console.error(e);
+	    }
+	  }
+
+	  return data;
+	};
+
+	const getPreviewCsv = name => {
+	  const data = getPreview();
+	  let csv = '';
+
+	  for (let item of data) {
+	    if (item.name === name) {
+	      csv = purify.sanitize(item.csv);
+	    }
+	  }
+
+	  return csv;
+	};
+
+	const splitSingleLineSkill = csv => {
+	  return csv.replace(/\s(skill|special|npc|support|intro|,|active)/g, '\n$1');
+	};
+
+	const isDomain = str => {
+	  if (!/^https?:\/\//.test(str)) return false;
+	  if (/\s/.test(str.trim())) return false;
+	  return true;
+	};
+
 	/** Detect free variable `global` from Node.js. */
 	var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
 
@@ -5492,6 +5563,121 @@
 
 	var isString_1 = isString;
 
+	/**
+	 * Creates a unary function that invokes `func` with its argument transformed.
+	 *
+	 * @private
+	 * @param {Function} func The function to wrap.
+	 * @param {Function} transform The argument transform.
+	 * @returns {Function} Returns the new function.
+	 */
+	function overArg(func, transform) {
+	  return function(arg) {
+	    return func(transform(arg));
+	  };
+	}
+
+	var _overArg = overArg;
+
+	/** Built-in value references. */
+	var getPrototype = _overArg(Object.getPrototypeOf, Object);
+
+	var _getPrototype = getPrototype;
+
+	/** `Object#toString` result references. */
+	var objectTag = '[object Object]';
+
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype,
+	    objectProto$2 = Object.prototype;
+
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty$2 = objectProto$2.hasOwnProperty;
+
+	/** Used to infer the `Object` constructor. */
+	var objectCtorString = funcToString.call(Object);
+
+	/**
+	 * Checks if `value` is a plain object, that is, an object created by the
+	 * `Object` constructor or one with a `[[Prototype]]` of `null`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.8.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 * }
+	 *
+	 * _.isPlainObject(new Foo);
+	 * // => false
+	 *
+	 * _.isPlainObject([1, 2, 3]);
+	 * // => false
+	 *
+	 * _.isPlainObject({ 'x': 0, 'y': 0 });
+	 * // => true
+	 *
+	 * _.isPlainObject(Object.create(null));
+	 * // => true
+	 */
+	function isPlainObject(value) {
+	  if (!isObjectLike_1(value) || _baseGetTag(value) != objectTag) {
+	    return false;
+	  }
+	  var proto = _getPrototype(value);
+	  if (proto === null) {
+	    return true;
+	  }
+	  var Ctor = hasOwnProperty$2.call(proto, 'constructor') && proto.constructor;
+	  return typeof Ctor == 'function' && Ctor instanceof Ctor &&
+	    funcToString.call(Ctor) == objectCtorString;
+	}
+
+	var isPlainObject_1 = isPlainObject;
+
+	const config = {
+	  origin: 'https://blhx.danmu9.com',
+	  apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
+	  hash: '',
+	  userName: '',
+	  timeout: 8,
+	  autoDownload: false,
+	  bottomToolbar: false
+	};
+
+	const getLocalConfig = () => {
+	  const str = localStorage.getItem('blhxfy:setting');
+	  let setting = JSON.parse(str);
+	  if (!isPlainObject_1(setting)) setting = {};
+	  const {
+	    origin
+	  } = setting;
+
+	  if (isDomain(origin)) {
+	    config.origin = origin.trim();
+	  }
+
+	  const keys = ['autoDownload', 'bottomToolbar'];
+	  keys.forEach(key => {
+	    let value = setting[key];
+	    if (isString_1(value)) value = value.trim();
+
+	    if (value) {
+	      config[key] = value;
+	    }
+	  });
+	};
+
+	getLocalConfig();
+
 	const {
 	  origin
 	} = config;
@@ -5575,11 +5761,6 @@
 	const fetchWithHash = async pathname => {
 	  const hash = await getHash;
 	  const data = await fetchData(`${pathname}?lecia=${hash}`);
-
-	  if (!pathname.includes('common-html') && !pathname.includes('lang-msg') && isString_1(data)) {
-	    return purify.sanitize(data);
-	  }
-
 	  return data;
 	};
 
@@ -7411,6 +7592,16 @@
 	  });
 	};
 
+	const whiteList = ['需要<%= quest_ap - sp %><%= point_name %>来开始。', '使用道具恢复<%= point_name %>？', `来自<span class='txt-request-name'><%= n.attributes.called_user_name %></span>的救援请求`, `来自<span class='txt-request-name'><%= raid['called_user_name'] %></span>的救援请求`, '还剩<%= can_quest_start_count %>回挑战（一共<%= max_quest_start_count %>回）', '<%= set_user.name %> Rank <%= set_user.rank %> 选择任务', '<%= title %>'];
+
+	const filter = str => {
+	  if (!whiteList.includes(str)) {
+	    return purify.sanitize(str);
+	  }
+
+	  return str;
+	};
+
 	const enNameMap = new Map();
 	const jpNameMap = new Map();
 	let loaded = false;
@@ -7428,7 +7619,7 @@
 	        obj[item.scenario] = item;
 	        obj.scenarios.push(item.scenario);
 	      } else {
-	        obj.trans = item.trans;
+	        obj.trans = filter(trim(item.trans));
 	        obj.noun = !!item.noun;
 	      }
 	    } else {
@@ -7441,7 +7632,7 @@
 	        obj[item.scenario] = item;
 	        obj.scenarios.push(item.scenario);
 	      } else {
-	        obj.trans = item.trans;
+	        obj.trans = filter(trim(item.trans));
 	        obj.noun = !!item.noun;
 	      }
 
@@ -7588,6 +7779,25 @@
 
 	  if (cont[0]) {
 	    cont.prepend(html$2);
+	  }
+	}
+
+	function autoDownloadCsv () {
+	  if (config.autoDownload) {
+	    let downloaded = false;
+	    $('#wrapper').off('click.blhxfy-dlcsv').on('click.blhxfy-dlcsv', '.cnt-quest-scene .btn-skip', function () {
+	      setTimeout(() => {
+	        if (!document.querySelector('.pop-synopsis')) {
+	          window.blhxfy.dlStoryCsv('fill');
+	          downloaded = true;
+	        }
+	      }, 100);
+	    });
+	    $('#wrapper').off('click.blhxfy-dlcsv2').on('click.blhxfy-dlcsv2', '.pop-synopsis .btn-usual-ok', function () {
+	      if (!downloaded) {
+	        window.blhxfy.dlStoryCsv('fill');
+	      }
+	    });
 	  }
 	}
 
@@ -7937,10 +8147,10 @@
 	var _isMasked = isMasked;
 
 	/** Used for built-in method references. */
-	var funcProto = Function.prototype;
+	var funcProto$1 = Function.prototype;
 
 	/** Used to resolve the decompiled source of functions. */
-	var funcToString = funcProto.toString;
+	var funcToString$1 = funcProto$1.toString;
 
 	/**
 	 * Converts `func` to its source code.
@@ -7952,7 +8162,7 @@
 	function toSource(func) {
 	  if (func != null) {
 	    try {
-	      return funcToString.call(func);
+	      return funcToString$1.call(func);
 	    } catch (e) {}
 	    try {
 	      return (func + '');
@@ -7973,18 +8183,18 @@
 	var reIsHostCtor = /^\[object .+?Constructor\]$/;
 
 	/** Used for built-in method references. */
-	var funcProto$1 = Function.prototype,
-	    objectProto$2 = Object.prototype;
+	var funcProto$2 = Function.prototype,
+	    objectProto$3 = Object.prototype;
 
 	/** Used to resolve the decompiled source of functions. */
-	var funcToString$1 = funcProto$1.toString;
+	var funcToString$2 = funcProto$2.toString;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$2 = objectProto$2.hasOwnProperty;
+	var hasOwnProperty$3 = objectProto$3.hasOwnProperty;
 
 	/** Used to detect if a method is native. */
 	var reIsNative = RegExp('^' +
-	  funcToString$1.call(hasOwnProperty$2).replace(reRegExpChar, '\\$&')
+	  funcToString$2.call(hasOwnProperty$3).replace(reRegExpChar, '\\$&')
 	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
 	);
 
@@ -8081,10 +8291,10 @@
 	var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
 	/** Used for built-in method references. */
-	var objectProto$3 = Object.prototype;
+	var objectProto$4 = Object.prototype;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$3 = objectProto$3.hasOwnProperty;
+	var hasOwnProperty$4 = objectProto$4.hasOwnProperty;
 
 	/**
 	 * Gets the hash value for `key`.
@@ -8101,16 +8311,16 @@
 	    var result = data[key];
 	    return result === HASH_UNDEFINED ? undefined : result;
 	  }
-	  return hasOwnProperty$3.call(data, key) ? data[key] : undefined;
+	  return hasOwnProperty$4.call(data, key) ? data[key] : undefined;
 	}
 
 	var _hashGet = hashGet;
 
 	/** Used for built-in method references. */
-	var objectProto$4 = Object.prototype;
+	var objectProto$5 = Object.prototype;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$4 = objectProto$4.hasOwnProperty;
+	var hasOwnProperty$5 = objectProto$5.hasOwnProperty;
 
 	/**
 	 * Checks if a hash value for `key` exists.
@@ -8123,7 +8333,7 @@
 	 */
 	function hashHas(key) {
 	  var data = this.__data__;
-	  return _nativeCreate ? (data[key] !== undefined) : hasOwnProperty$4.call(data, key);
+	  return _nativeCreate ? (data[key] !== undefined) : hasOwnProperty$5.call(data, key);
 	}
 
 	var _hashHas = hashHas;
@@ -8433,10 +8643,10 @@
 	var _baseAssignValue = baseAssignValue;
 
 	/** Used for built-in method references. */
-	var objectProto$5 = Object.prototype;
+	var objectProto$6 = Object.prototype;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$5 = objectProto$5.hasOwnProperty;
+	var hasOwnProperty$6 = objectProto$6.hasOwnProperty;
 
 	/**
 	 * Assigns `value` to `key` of `object` if the existing value is not equivalent
@@ -8450,7 +8660,7 @@
 	 */
 	function assignValue(object, key, value) {
 	  var objValue = object[key];
-	  if (!(hasOwnProperty$5.call(object, key) && eq_1(objValue, value)) ||
+	  if (!(hasOwnProperty$6.call(object, key) && eq_1(objValue, value)) ||
 	      (value === undefined && !(key in object))) {
 	    _baseAssignValue(object, key, value);
 	  }
@@ -8534,13 +8744,13 @@
 	var _baseIsArguments = baseIsArguments;
 
 	/** Used for built-in method references. */
-	var objectProto$6 = Object.prototype;
+	var objectProto$7 = Object.prototype;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$6 = objectProto$6.hasOwnProperty;
+	var hasOwnProperty$7 = objectProto$7.hasOwnProperty;
 
 	/** Built-in value references. */
-	var propertyIsEnumerable = objectProto$6.propertyIsEnumerable;
+	var propertyIsEnumerable = objectProto$7.propertyIsEnumerable;
 
 	/**
 	 * Checks if `value` is likely an `arguments` object.
@@ -8561,7 +8771,7 @@
 	 * // => false
 	 */
 	var isArguments = _baseIsArguments(function() { return arguments; }()) ? _baseIsArguments : function(value) {
-	  return isObjectLike_1(value) && hasOwnProperty$6.call(value, 'callee') &&
+	  return isObjectLike_1(value) && hasOwnProperty$7.call(value, 'callee') &&
 	    !propertyIsEnumerable.call(value, 'callee');
 	};
 
@@ -8695,7 +8905,7 @@
 	    funcTag$1 = '[object Function]',
 	    mapTag = '[object Map]',
 	    numberTag = '[object Number]',
-	    objectTag = '[object Object]',
+	    objectTag$1 = '[object Object]',
 	    regexpTag = '[object RegExp]',
 	    setTag = '[object Set]',
 	    stringTag$1 = '[object String]',
@@ -8725,7 +8935,7 @@
 	typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
 	typedArrayTags[errorTag] = typedArrayTags[funcTag$1] =
 	typedArrayTags[mapTag] = typedArrayTags[numberTag] =
-	typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+	typedArrayTags[objectTag$1] = typedArrayTags[regexpTag] =
 	typedArrayTags[setTag] = typedArrayTags[stringTag$1] =
 	typedArrayTags[weakMapTag] = false;
 
@@ -8814,10 +9024,10 @@
 	var isTypedArray_1 = isTypedArray;
 
 	/** Used for built-in method references. */
-	var objectProto$7 = Object.prototype;
+	var objectProto$8 = Object.prototype;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$7 = objectProto$7.hasOwnProperty;
+	var hasOwnProperty$8 = objectProto$8.hasOwnProperty;
 
 	/**
 	 * Creates an array of the enumerable property names of the array-like `value`.
@@ -8837,7 +9047,7 @@
 	      length = result.length;
 
 	  for (var key in value) {
-	    if ((inherited || hasOwnProperty$7.call(value, key)) &&
+	    if ((inherited || hasOwnProperty$8.call(value, key)) &&
 	        !(skipIndexes && (
 	           // Safari 9 has enumerable `arguments.length` in strict mode.
 	           key == 'length' ||
@@ -8857,7 +9067,7 @@
 	var _arrayLikeKeys = arrayLikeKeys;
 
 	/** Used for built-in method references. */
-	var objectProto$8 = Object.prototype;
+	var objectProto$9 = Object.prototype;
 
 	/**
 	 * Checks if `value` is likely a prototype object.
@@ -8868,28 +9078,12 @@
 	 */
 	function isPrototype(value) {
 	  var Ctor = value && value.constructor,
-	      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto$8;
+	      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto$9;
 
 	  return value === proto;
 	}
 
 	var _isPrototype = isPrototype;
-
-	/**
-	 * Creates a unary function that invokes `func` with its argument transformed.
-	 *
-	 * @private
-	 * @param {Function} func The function to wrap.
-	 * @param {Function} transform The argument transform.
-	 * @returns {Function} Returns the new function.
-	 */
-	function overArg(func, transform) {
-	  return function(arg) {
-	    return func(transform(arg));
-	  };
-	}
-
-	var _overArg = overArg;
 
 	/* Built-in method references for those with the same name as other `lodash` methods. */
 	var nativeKeys = _overArg(Object.keys, Object);
@@ -8897,10 +9091,10 @@
 	var _nativeKeys = nativeKeys;
 
 	/** Used for built-in method references. */
-	var objectProto$9 = Object.prototype;
+	var objectProto$a = Object.prototype;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$8 = objectProto$9.hasOwnProperty;
+	var hasOwnProperty$9 = objectProto$a.hasOwnProperty;
 
 	/**
 	 * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
@@ -8915,7 +9109,7 @@
 	  }
 	  var result = [];
 	  for (var key in Object(object)) {
-	    if (hasOwnProperty$8.call(object, key) && key != 'constructor') {
+	    if (hasOwnProperty$9.call(object, key) && key != 'constructor') {
 	      result.push(key);
 	    }
 	  }
@@ -9026,10 +9220,10 @@
 	var _nativeKeysIn = nativeKeysIn;
 
 	/** Used for built-in method references. */
-	var objectProto$a = Object.prototype;
+	var objectProto$b = Object.prototype;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$9 = objectProto$a.hasOwnProperty;
+	var hasOwnProperty$a = objectProto$b.hasOwnProperty;
 
 	/**
 	 * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
@@ -9046,7 +9240,7 @@
 	      result = [];
 
 	  for (var key in object) {
-	    if (!(key == 'constructor' && (isProto || !hasOwnProperty$9.call(object, key)))) {
+	    if (!(key == 'constructor' && (isProto || !hasOwnProperty$a.call(object, key)))) {
 	      result.push(key);
 	    }
 	  }
@@ -9207,10 +9401,10 @@
 	var stubArray_1 = stubArray;
 
 	/** Used for built-in method references. */
-	var objectProto$b = Object.prototype;
+	var objectProto$c = Object.prototype;
 
 	/** Built-in value references. */
-	var propertyIsEnumerable$1 = objectProto$b.propertyIsEnumerable;
+	var propertyIsEnumerable$1 = objectProto$c.propertyIsEnumerable;
 
 	/* Built-in method references for those with the same name as other `lodash` methods. */
 	var nativeGetSymbols = Object.getOwnPropertySymbols;
@@ -9268,11 +9462,6 @@
 	}
 
 	var _arrayPush = arrayPush;
-
-	/** Built-in value references. */
-	var getPrototype = _overArg(Object.getPrototypeOf, Object);
-
-	var _getPrototype = getPrototype;
 
 	/* Built-in method references for those with the same name as other `lodash` methods. */
 	var nativeGetSymbols$1 = Object.getOwnPropertySymbols;
@@ -9376,7 +9565,7 @@
 
 	/** `Object#toString` result references. */
 	var mapTag$1 = '[object Map]',
-	    objectTag$1 = '[object Object]',
+	    objectTag$2 = '[object Object]',
 	    promiseTag = '[object Promise]',
 	    setTag$1 = '[object Set]',
 	    weakMapTag$1 = '[object WeakMap]';
@@ -9407,7 +9596,7 @@
 	    (_WeakMap && getTag(new _WeakMap) != weakMapTag$1)) {
 	  getTag = function(value) {
 	    var result = _baseGetTag(value),
-	        Ctor = result == objectTag$1 ? value.constructor : undefined,
+	        Ctor = result == objectTag$2 ? value.constructor : undefined,
 	        ctorString = Ctor ? _toSource(Ctor) : '';
 
 	    if (ctorString) {
@@ -9426,10 +9615,10 @@
 	var _getTag = getTag;
 
 	/** Used for built-in method references. */
-	var objectProto$c = Object.prototype;
+	var objectProto$d = Object.prototype;
 
 	/** Used to check objects for own properties. */
-	var hasOwnProperty$a = objectProto$c.hasOwnProperty;
+	var hasOwnProperty$b = objectProto$d.hasOwnProperty;
 
 	/**
 	 * Initializes an array clone.
@@ -9443,7 +9632,7 @@
 	      result = new array.constructor(length);
 
 	  // Add properties assigned by `RegExp#exec`.
-	  if (length && typeof array[0] == 'string' && hasOwnProperty$a.call(array, 'index')) {
+	  if (length && typeof array[0] == 'string' && hasOwnProperty$b.call(array, 'index')) {
 	    result.index = array.index;
 	    result.input = array.input;
 	  }
@@ -9748,7 +9937,7 @@
 	    genTag$1 = '[object GeneratorFunction]',
 	    mapTag$4 = '[object Map]',
 	    numberTag$2 = '[object Number]',
-	    objectTag$2 = '[object Object]',
+	    objectTag$3 = '[object Object]',
 	    regexpTag$2 = '[object RegExp]',
 	    setTag$4 = '[object Set]',
 	    stringTag$3 = '[object String]',
@@ -9775,7 +9964,7 @@
 	cloneableTags[float32Tag$2] = cloneableTags[float64Tag$2] =
 	cloneableTags[int8Tag$2] = cloneableTags[int16Tag$2] =
 	cloneableTags[int32Tag$2] = cloneableTags[mapTag$4] =
-	cloneableTags[numberTag$2] = cloneableTags[objectTag$2] =
+	cloneableTags[numberTag$2] = cloneableTags[objectTag$3] =
 	cloneableTags[regexpTag$2] = cloneableTags[setTag$4] =
 	cloneableTags[stringTag$3] = cloneableTags[symbolTag$1] =
 	cloneableTags[uint8Tag$2] = cloneableTags[uint8ClampedTag$2] =
@@ -9827,7 +10016,7 @@
 	    if (isBuffer_1(value)) {
 	      return _cloneBuffer(value, isDeep);
 	    }
-	    if (tag == objectTag$2 || tag == argsTag$2 || (isFunc && !object)) {
+	    if (tag == objectTag$3 || tag == argsTag$2 || (isFunc && !object)) {
 	      result = (isFlat || isFunc) ? {} : _initCloneObject(value);
 	      if (!isDeep) {
 	        return isFlat
@@ -9911,79 +10100,6 @@
 
 	var cloneDeep_1 = cloneDeep;
 
-	const trim = str => {
-	  if (!str) return '';
-	  return str.trim();
-	};
-
-	var tryDownload = function (content, filename) {
-	  const eleLink = document.createElement('a');
-	  eleLink.download = filename;
-	  eleLink.style.display = 'none';
-	  const blob = new Blob([content], {
-	    type: 'text/csv'
-	  });
-	  eleLink.href = URL.createObjectURL(blob);
-	  document.body.appendChild(eleLink);
-	  eleLink.click();
-	  document.body.removeChild(eleLink);
-	};
-
-	const replaceWords = (str, map, lang = 'en') => {
-	  if (!str) return str;
-	  let _str = str;
-
-	  for (let [key, val] of map) {
-	    if (!key || key.length < 2) continue;
-	    const expr = key.replace(/\?/g, '\\?').replace(/\./g, '\\.').replace(/\*/g, '\\*').replace(/\+/g, '\\+');
-	    const reStr = lang === 'en' ? `\\b${expr}\\b` : `${expr}`;
-
-	    if (typeof val === 'string') {
-	      _str = _str.replace(new RegExp(reStr, 'g'), val);
-	    } else if (val && val.trans && !val.noun) {
-	      if (val.ignoreCase) {
-	        _str = _str.replace(new RegExp(reStr, 'gi'), val.trans);
-	      } else {
-	        _str = _str.replace(new RegExp(reStr, 'g'), val.trans);
-	      }
-	    }
-	  }
-
-	  return _str;
-	};
-
-	const getPreview = () => {
-	  const str = sessionStorage.getItem('blhxfy:preview');
-	  let data = [];
-
-	  if (str) {
-	    try {
-	      data = JSON.parse(str);
-	    } catch (e) {
-	      console.error(e);
-	    }
-	  }
-
-	  return data;
-	};
-
-	const getPreviewCsv = name => {
-	  const data = getPreview();
-	  let csv = '';
-
-	  for (let item of data) {
-	    if (item.name === name) {
-	      csv = purify.sanitize(item.csv);
-	    }
-	  }
-
-	  return csv;
-	};
-
-	const splitSingleLineSkill = csv => {
-	  return csv.replace(/\s(skill|special|npc|support|intro|,|active)/g, '\n$1');
-	};
-
 	const txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
 
 	const getScenario = async name => {
@@ -10011,7 +10127,7 @@
 	      const id = idArr[0];
 	      const type = idArr[1] || 'detail';
 	      const obj = transMap.get(id) || {};
-	      obj[type] = item.trans ? item.trans.replace(/姬塔/g, config.userName) : false;
+	      obj[type] = item.trans ? filter(item.trans.replace(/姬塔/g, config.userName)) : false;
 	      transMap.set(id, obj);
 	    }
 	  });
@@ -10133,6 +10249,7 @@
 	  }
 
 	  insertToolHtml();
+	  autoDownloadCsv();
 	  const scenarioName = sNameTemp;
 	  scenarioCache.data = cloneDeep_1(data);
 	  scenarioCache.name = scenarioName;
@@ -10232,14 +10349,14 @@
 
 	    const list = parseCsv(langMsg);
 	    list.forEach(item => {
-	      if (item.id && item.id.trim()) {
+	      if (trim(item.id)) {
 	        item.en && langMsgMap.set(`${item.id}${item.en}`, {
-	          trans: item.trans,
+	          trans: filter(item.trans),
 	          en: item.en,
 	          jp: item.jp
 	        });
 	        item.jp && langMsgMap.set(`${item.jp}`, {
-	          trans: item.trans,
+	          trans: filter(item.trans),
 	          en: item.en,
 	          jp: item.jp
 	        });
@@ -10287,9 +10404,9 @@
 	  const sortedList = sortKeywords(list, 'comment');
 	  sortedList.forEach(item => {
 	    if (item.comment && item.trans && item.type) {
-	      const comment = item.comment.trim();
-	      const trans = item.trans.trim();
-	      const type = item.type.trim() || '1';
+	      const comment = trim(item.comment);
+	      const trans = filter(trim(item.trans));
+	      const type = trim(item.type) || '1';
 
 	      if (comment && trans) {
 	        state.commSkillMap.set(comment, {
@@ -10339,7 +10456,7 @@
 
 	  if (csvName) {
 	    const csvData = await fetchWithHash(`/blhxfy/data/skill/${csvName}`);
-	    const list = parseCsv(csvData);
+	    const list = parseCsv(filter(csvData));
 	    setSkillMap(list);
 	  }
 
@@ -10354,7 +10471,7 @@
 	      const data = JSON.parse(str);
 
 	      if (data.id === npcId) {
-	        const csv = purify.sanitize(data.csv);
+	        const csv = filter(data.csv);
 	        const list = parseCsv(csv);
 	        list.forEach(item => {
 	          if (item.id === 'npc') {
@@ -10393,7 +10510,7 @@
 	  const list = parseCsv(csv);
 	  list.forEach(item => {
 	    const detail = trim(item.detail);
-	    const trans = trim(item.trans);
+	    const trans = filter(trim(item.trans));
 
 	    if (detail && trans) {
 	      buffMap[type].set(detail, trans);
@@ -10645,11 +10762,11 @@
 	    const list = parseCsv(csv);
 	    list.forEach(item => {
 	      if (item && item.id) {
-	        const _id = item.id.trim();
+	        const _id = trim(item.id);
 
 	        if (_id) skillMap$1.set(_id, {
-	          name: item.name.trim(),
-	          detail: item.detail.trim()
+	          name: filter(trim(item.name)),
+	          detail: filter(trim(item.detail))
 	        });
 	      }
 	    });
@@ -10730,11 +10847,6 @@
 	const htmlMap = new Map();
 	let loaded$4 = false;
 
-	const trim$1 = str => {
-	  if (!str) return '';
-	  return str.trim();
-	};
-
 	const getCommHtmlData = async () => {
 	  if (!loaded$4) {
 	    let csv = await getLocalData('common-html');
@@ -10747,9 +10859,9 @@
 	    const list = parseCsv(csv);
 	    const tempMap = new Map();
 	    sortKeywords(list, 'text').forEach((item, index) => {
-	      const pathname = trim$1(item.path);
-	      const text = trim$1(item.text);
-	      const trans = trim$1(item.trans);
+	      const pathname = trim(item.path);
+	      const text = trim(item.text);
+	      const trans = filter(trim(item.trans));
 	      const times = item.count | 0 || 1;
 
 	      if (pathname && text && trans) {
@@ -10782,18 +10894,13 @@
 	const htmlMap$1 = new Map();
 	let loaded$5 = false;
 
-	const trim$2 = str => {
-	  if (!str) return '';
-	  return str.trim();
-	};
-
 	const getArchiveData = async () => {
 	  if (!loaded$5) {
 	    const csv = await fetchWithHash('/blhxfy/data/archive.csv');
 	    const list = parseCsv(csv);
 	    sortKeywords(list, 'text').forEach(item => {
-	      const text = trim$2(item.text);
-	      const trans = trim$2(item.trans);
+	      const text = trim(item.text);
+	      const trans = filter(trim(item.trans));
 	      const times = item.count | 0 || 1;
 
 	      if (text && trans) {
@@ -10808,6 +10915,117 @@
 
 	  return htmlMap$1;
 	};
+
+	const template = `
+<style>
+#btn-setting-blhxfy {
+  position: absolute;
+  left: 16px;
+  top: 104px;
+}
+#blhxfy-setting-modal {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #f6feff;
+  width: 100%;
+  min-height: 100%;
+  z-index: 99999;
+  padding-bottom: 38px;
+}
+#blhxfy-setting-modal input[type=text] {
+  display: block !important;
+  outline: none;
+  width: 274px;
+  font-size: 12px;
+  padding: 4px;
+  box-shadow: none;
+  border: 1px solid #78bbd8;
+  border-radius: 2px;
+  font-family: sans-serif;
+  color: #4d6671;
+}
+#blhxfy-setting-modal.show {
+  display: block;
+}
+#blhxfy-setting-modal input[type=text]::placeholder {
+  color: #aaa;
+}
+</style>
+<div id="blhxfy-setting-modal">
+<div class="cnt-setting">
+	<div class="prt-setting-header"><img class="img-header" src="https://blhx.danmu9.com/blhxfy/data/static/image/setting-header.jpg" alt="header_public"></div>
+
+
+	<div class="prt-setting-module">
+		<div class="txt-setting-title">插件设置</div>
+		<div class="prt-setting-frame">
+			<div class="prt-setting-article">
+				<div class="txt-article-title">翻译数据域名</div>
+				<ul class="txt-article-lead">
+					<li>留空则使用默认的数据源</li>
+				</ul>
+				<div class="prt-button-l">
+          <input id="origin-setting-blhxfy" oninput="window.blhxfy.setting('origin', this.value)" type="text" value="" placeholder="https://blhx.danmu9.com">
+        </div>
+      </div>
+      <div class="txt-setting-lead">
+        ※使用第三方数据源有风险，请选择可以信任的数据源。
+      </div>
+
+      <div class="prt-setting-article">
+				<div class="txt-article-title">主角名</div>
+				<ul class="txt-article-lead">
+					<li>剧情里显示的主角名字，留空则使用你自己的昵称</li>
+				</ul>
+				<div class="prt-button-l">
+          <input id="username-setting-blhxfy" oninput="window.blhxfy.setting('username', this.value)" type="text" value="" placeholder="请输入主角名">
+				</div>
+      </div>
+
+      <div class="prt-setting-article">
+				<div class="txt-article-title">剧情CSV文件快捷下载</div>
+				<ul class="txt-article-lead">
+					<li>激活后在 SKIP 的时候自动下载剧情CSV</li>
+				</ul>
+				<div class="prt-button-l">
+					<div>
+						<input id="auto-download-setting-blhxfy" onchange="window.blhxfy.setting('auto-download', this.checked)" type="checkbox" value="">
+						<label for="auto-download-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">自动下载CSV</label>
+					</div>
+        </div>
+      </div>
+
+			<div class="prt-setting-article">
+				<div class="txt-article-title">显示底部工具栏</div>
+				<ul class="txt-article-lead">
+					<li>在手机浏览器上也显示底部工具栏</li>
+				</ul>
+				<div class="prt-button-l">
+					<div>
+						<input id="bottom-toolbar-setting-blhxfy" onchange="window.blhxfy.setting('bottom-toolbar', this.checked)" type="checkbox" value="">
+						<label for="bottom-toolbar-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">底部工具栏</label>
+					</div>
+				</div>
+      </div>
+      <div class="txt-setting-lead">
+        ※修改的设置在刷新页面后生效
+      </div>
+		</div>
+	</div>
+
+
+	<div class="prt-lead-link">
+		<div class="lis-lead-prev" data-href="setting"><div class="atx-lead-link">返回设置</div></div>
+		<div class="lis-lead-prev" data-href="mypage"><div class="atx-lead-link">返回首页</div></div>
+	</div>
+</div>
+</div>
+`;
+	function insertSettingHtml (html) {
+	  return html.replace('<div class="cnt-setting">', `${template}<div class="cnt-setting"><div class="cnt-setting"><div class="btn-usual-text" id="btn-setting-blhxfy" onclick="window.blhxfy.setting(\'show\')">汉化插件设置</div>`);
+	}
 
 	const replaceHTML = async (html, pathname) => {
 	  let _html = html;
@@ -10863,10 +11081,18 @@
 	    return data;
 	  }
 
-	  if (pathname.includes('/archive/content/library/')) {
-	    html = await replaceArchive(html);
-	  } else {
-	    html = await replaceHTML(html, pathname);
+	  try {
+	    if (pathname.includes('/archive/content/library/')) {
+	      html = await replaceArchive(html);
+	    } else {
+	      html = await replaceHTML(html, pathname);
+	    }
+	  } catch (err) {
+	    console.error(err);
+	  }
+
+	  if (pathname.includes('/setting/content/index/index')) {
+	    html = insertSettingHtml(html);
 	  }
 
 	  data.data = encodeURIComponent(html);
@@ -10876,20 +11102,15 @@
 	const townMap = new Map();
 	let loaded$6 = false;
 
-	const trim$3 = str => {
-	  if (!str) return '';
-	  return str.trim();
-	};
-
 	const getTownData = async () => {
 	  if (!loaded$6) {
 	    const csv = await fetchWithHash('/blhxfy/data/town-info.csv');
 	    const list = parseCsv(csv);
 	    list.forEach(item => {
-	      const id = trim$3(item.id);
-	      const name = trim$3(item.name);
-	      const detail = trim$3(item.detail);
-	      const vyrn = trim$3(item.vyrn);
+	      const id = trim(item.id);
+	      const name = filter(trim(item.name));
+	      const detail = filter(trim(item.detail));
+	      const vyrn = filter(trim(item.vyrn));
 
 	      if (id && name) {
 	        townMap.set(id, {
@@ -10938,19 +11159,14 @@
 	const islandMap = new Map();
 	let loaded$7 = false;
 
-	const trim$4 = str => {
-	  if (!str) return '';
-	  return str.trim();
-	};
-
 	const getIslandData = async () => {
 	  if (!loaded$7) {
 	    const csv = await fetchWithHash('/blhxfy/data/island-info.csv');
 	    const list = parseCsv(csv);
 	    list.forEach(item => {
-	      const id = trim$4(item.id);
-	      const name = trim$4(item.name);
-	      const detail = trim$4(item.detail);
+	      const id = trim(item.id);
+	      const name = filter(trim(item.name));
+	      const detail = filter(trim(item.detail));
 
 	      if (id && name) {
 	        islandMap.set(id, {
@@ -11004,11 +11220,6 @@
 	const nChatMap = new Map();
 	let loaded$8 = false;
 
-	const trim$5 = str => {
-	  if (!str) return '';
-	  return str.trim();
-	};
-
 	const getChatData = async () => {
 	  if (!loaded$8) {
 	    let csv = await getLocalData('chat-preset');
@@ -11020,9 +11231,9 @@
 
 	    const list = parseCsv(csv);
 	    list.forEach(item => {
-	      const id = trim$5(item.id);
-	      const text = trim$5(item.text);
-	      const trans = trim$5(item.trans);
+	      const id = trim(item.id);
+	      const text = trim(item.text);
+	      const trans = filter(trim(item.trans));
 
 	      if (id && trans) {
 	        if (/\d+-n/.test(id)) {
@@ -11121,19 +11332,14 @@
 	const voiceMap = new Map();
 	let loaded$9 = false;
 
-	const trim$6 = str => {
-	  if (!str) return '';
-	  return str.trim();
-	};
-
 	const getTownData$1 = async () => {
 	  if (!loaded$9) {
 	    const csv = await fetchWithHash('/blhxfy/data/voice-mypage.csv');
 	    const list = parseCsv(csv);
 	    list.forEach(item => {
-	      const path = trim$6(item.path);
-	      const trans = trim$6(item.trans);
-	      const duration = trim$6(item.duration) || 10;
+	      const path = trim(item.path);
+	      const trans = filter(trim(item.trans));
+	      const duration = trim(item.duration) || 10;
 
 	      if (path && trans) {
 	        voiceMap.set(path, {
@@ -11274,7 +11480,7 @@
 
 	const getLocalName = () => {
 	  const name = localStorage.getItem('blhxfy:name');
-	  if (name) config.userName = name;
+	  if (name) config.userName = filter(name);
 	};
 
 	getLocalName();
@@ -11298,17 +11504,22 @@
 	      setUserName();
 	      data = await transScenario(data, pathname);
 	    } else if (pathname.includes('/content/')) {
-	      if (pathname.includes('/profile/content/index/')) {
-	        getUserName(data);
+	      try {
+	        if (pathname.includes('/profile/content/index/')) {
+	          getUserName(data);
+	        }
+
+	        data = await transLangMsg(data, pathname);
+
+	        if (pathname.includes('/user/content/index')) {
+	          data = await transTownInfo(data, pathname);
+	          data = await pageIndex(data, pathname);
+	        }
+	      } catch (err) {
+	        console.error(err);
 	      }
 
-	      data = await transLangMsg(data, pathname);
 	      data = await transHTML(data, pathname);
-
-	      if (pathname.includes('/user/content/index')) {
-	        data = await transTownInfo(data, pathname);
-	        data = await pageIndex(data, pathname);
-	      }
 	    } else if (pathname.includes('/npc/npc/') || pathname.includes('/archive/npc_detail')) {
 	      data = await parseSkill(data, pathname);
 	    } else if (pathname.includes('/party_ability_subaction/') || pathname.includes('/party/job/') || pathname.includes('/party/ability_list/') || pathname.includes('/zenith/ability_list/') || pathname.includes('/party/job_info/')) {
@@ -11596,12 +11807,389 @@
 	  }
 	}
 
+	const addToolbar = () => {
+	  if (config.bottomToolbar) {
+	    document.addEventListener('DOMContentLoaded', function () {
+	      if (!document.querySelector('#treasure-footer')) {
+	        document.querySelector('.cnt-global-footer').insertAdjacentHTML('afterend', `
+        <footer id="treasure-footer">
+          <div class="cnt-treasure-footer" style="height:40px">
+            <div class="btn-treasure-footer-back"></div>
+            <div class="btn-treasure-footer-reload"></div>
+            <div class="btn-treasure-footer-mypage" data-href="mypage"></div>
+            <div id="prt-treasure-slider" class="prt-treasure-slider">
+              <ul class="lis-treasures" id="treasure-list" data-treasure-max="9"></ul>
+            </div>
+          </div>
+          <div id="treasure-pop"></div>
+        </footer>
+        `);
+	      }
+	    });
+	  }
+	};
+
+	addToolbar();
+
+	document.addEventListener('DOMContentLoaded', function () {
+	  document.head.insertAdjacentHTML('afterbegin', `
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-startup-image" href="${config.origin}/blhxfy/data/static/image/splash.png">
+  `);
+	  document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute('content', '碧蓝幻想');
+	  document.title = '碧蓝幻想';
+	});
+
+	/**
+	 * Gets the timestamp of the number of milliseconds that have elapsed since
+	 * the Unix epoch (1 January 1970 00:00:00 UTC).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 2.4.0
+	 * @category Date
+	 * @returns {number} Returns the timestamp.
+	 * @example
+	 *
+	 * _.defer(function(stamp) {
+	 *   console.log(_.now() - stamp);
+	 * }, _.now());
+	 * // => Logs the number of milliseconds it took for the deferred invocation.
+	 */
+	var now = function() {
+	  return _root.Date.now();
+	};
+
+	var now_1 = now;
+
+	/** `Object#toString` result references. */
+	var symbolTag$2 = '[object Symbol]';
+
+	/**
+	 * Checks if `value` is classified as a `Symbol` primitive or object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+	 * @example
+	 *
+	 * _.isSymbol(Symbol.iterator);
+	 * // => true
+	 *
+	 * _.isSymbol('abc');
+	 * // => false
+	 */
+	function isSymbol(value) {
+	  return typeof value == 'symbol' ||
+	    (isObjectLike_1(value) && _baseGetTag(value) == symbolTag$2);
+	}
+
+	var isSymbol_1 = isSymbol;
+
+	/** Used as references for various `Number` constants. */
+	var NAN = 0 / 0;
+
+	/** Used to match leading and trailing whitespace. */
+	var reTrim = /^\s+|\s+$/g;
+
+	/** Used to detect bad signed hexadecimal string values. */
+	var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+
+	/** Used to detect binary string values. */
+	var reIsBinary = /^0b[01]+$/i;
+
+	/** Used to detect octal string values. */
+	var reIsOctal = /^0o[0-7]+$/i;
+
+	/** Built-in method references without a dependency on `root`. */
+	var freeParseInt = parseInt;
+
+	/**
+	 * Converts `value` to a number.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to process.
+	 * @returns {number} Returns the number.
+	 * @example
+	 *
+	 * _.toNumber(3.2);
+	 * // => 3.2
+	 *
+	 * _.toNumber(Number.MIN_VALUE);
+	 * // => 5e-324
+	 *
+	 * _.toNumber(Infinity);
+	 * // => Infinity
+	 *
+	 * _.toNumber('3.2');
+	 * // => 3.2
+	 */
+	function toNumber(value) {
+	  if (typeof value == 'number') {
+	    return value;
+	  }
+	  if (isSymbol_1(value)) {
+	    return NAN;
+	  }
+	  if (isObject_1(value)) {
+	    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+	    value = isObject_1(other) ? (other + '') : other;
+	  }
+	  if (typeof value != 'string') {
+	    return value === 0 ? value : +value;
+	  }
+	  value = value.replace(reTrim, '');
+	  var isBinary = reIsBinary.test(value);
+	  return (isBinary || reIsOctal.test(value))
+	    ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
+	    : (reIsBadHex.test(value) ? NAN : +value);
+	}
+
+	var toNumber_1 = toNumber;
+
+	/** Error message constants. */
+	var FUNC_ERROR_TEXT = 'Expected a function';
+
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeMax = Math.max,
+	    nativeMin = Math.min;
+
+	/**
+	 * Creates a debounced function that delays invoking `func` until after `wait`
+	 * milliseconds have elapsed since the last time the debounced function was
+	 * invoked. The debounced function comes with a `cancel` method to cancel
+	 * delayed `func` invocations and a `flush` method to immediately invoke them.
+	 * Provide `options` to indicate whether `func` should be invoked on the
+	 * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
+	 * with the last arguments provided to the debounced function. Subsequent
+	 * calls to the debounced function return the result of the last `func`
+	 * invocation.
+	 *
+	 * **Note:** If `leading` and `trailing` options are `true`, `func` is
+	 * invoked on the trailing edge of the timeout only if the debounced function
+	 * is invoked more than once during the `wait` timeout.
+	 *
+	 * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
+	 * until to the next tick, similar to `setTimeout` with a timeout of `0`.
+	 *
+	 * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
+	 * for details over the differences between `_.debounce` and `_.throttle`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Function
+	 * @param {Function} func The function to debounce.
+	 * @param {number} [wait=0] The number of milliseconds to delay.
+	 * @param {Object} [options={}] The options object.
+	 * @param {boolean} [options.leading=false]
+	 *  Specify invoking on the leading edge of the timeout.
+	 * @param {number} [options.maxWait]
+	 *  The maximum time `func` is allowed to be delayed before it's invoked.
+	 * @param {boolean} [options.trailing=true]
+	 *  Specify invoking on the trailing edge of the timeout.
+	 * @returns {Function} Returns the new debounced function.
+	 * @example
+	 *
+	 * // Avoid costly calculations while the window size is in flux.
+	 * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+	 *
+	 * // Invoke `sendMail` when clicked, debouncing subsequent calls.
+	 * jQuery(element).on('click', _.debounce(sendMail, 300, {
+	 *   'leading': true,
+	 *   'trailing': false
+	 * }));
+	 *
+	 * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
+	 * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
+	 * var source = new EventSource('/stream');
+	 * jQuery(source).on('message', debounced);
+	 *
+	 * // Cancel the trailing debounced invocation.
+	 * jQuery(window).on('popstate', debounced.cancel);
+	 */
+	function debounce(func, wait, options) {
+	  var lastArgs,
+	      lastThis,
+	      maxWait,
+	      result,
+	      timerId,
+	      lastCallTime,
+	      lastInvokeTime = 0,
+	      leading = false,
+	      maxing = false,
+	      trailing = true;
+
+	  if (typeof func != 'function') {
+	    throw new TypeError(FUNC_ERROR_TEXT);
+	  }
+	  wait = toNumber_1(wait) || 0;
+	  if (isObject_1(options)) {
+	    leading = !!options.leading;
+	    maxing = 'maxWait' in options;
+	    maxWait = maxing ? nativeMax(toNumber_1(options.maxWait) || 0, wait) : maxWait;
+	    trailing = 'trailing' in options ? !!options.trailing : trailing;
+	  }
+
+	  function invokeFunc(time) {
+	    var args = lastArgs,
+	        thisArg = lastThis;
+
+	    lastArgs = lastThis = undefined;
+	    lastInvokeTime = time;
+	    result = func.apply(thisArg, args);
+	    return result;
+	  }
+
+	  function leadingEdge(time) {
+	    // Reset any `maxWait` timer.
+	    lastInvokeTime = time;
+	    // Start the timer for the trailing edge.
+	    timerId = setTimeout(timerExpired, wait);
+	    // Invoke the leading edge.
+	    return leading ? invokeFunc(time) : result;
+	  }
+
+	  function remainingWait(time) {
+	    var timeSinceLastCall = time - lastCallTime,
+	        timeSinceLastInvoke = time - lastInvokeTime,
+	        timeWaiting = wait - timeSinceLastCall;
+
+	    return maxing
+	      ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke)
+	      : timeWaiting;
+	  }
+
+	  function shouldInvoke(time) {
+	    var timeSinceLastCall = time - lastCallTime,
+	        timeSinceLastInvoke = time - lastInvokeTime;
+
+	    // Either this is the first call, activity has stopped and we're at the
+	    // trailing edge, the system time has gone backwards and we're treating
+	    // it as the trailing edge, or we've hit the `maxWait` limit.
+	    return (lastCallTime === undefined || (timeSinceLastCall >= wait) ||
+	      (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait));
+	  }
+
+	  function timerExpired() {
+	    var time = now_1();
+	    if (shouldInvoke(time)) {
+	      return trailingEdge(time);
+	    }
+	    // Restart the timer.
+	    timerId = setTimeout(timerExpired, remainingWait(time));
+	  }
+
+	  function trailingEdge(time) {
+	    timerId = undefined;
+
+	    // Only invoke if we have `lastArgs` which means `func` has been
+	    // debounced at least once.
+	    if (trailing && lastArgs) {
+	      return invokeFunc(time);
+	    }
+	    lastArgs = lastThis = undefined;
+	    return result;
+	  }
+
+	  function cancel() {
+	    if (timerId !== undefined) {
+	      clearTimeout(timerId);
+	    }
+	    lastInvokeTime = 0;
+	    lastArgs = lastCallTime = lastThis = timerId = undefined;
+	  }
+
+	  function flush() {
+	    return timerId === undefined ? result : trailingEdge(now_1());
+	  }
+
+	  function debounced() {
+	    var time = now_1(),
+	        isInvoking = shouldInvoke(time);
+
+	    lastArgs = arguments;
+	    lastThis = this;
+	    lastCallTime = time;
+
+	    if (isInvoking) {
+	      if (timerId === undefined) {
+	        return leadingEdge(lastCallTime);
+	      }
+	      if (maxing) {
+	        // Handle invocations in a tight loop.
+	        timerId = setTimeout(timerExpired, wait);
+	        return invokeFunc(lastCallTime);
+	      }
+	    }
+	    if (timerId === undefined) {
+	      timerId = setTimeout(timerExpired, wait);
+	    }
+	    return result;
+	  }
+	  debounced.cancel = cancel;
+	  debounced.flush = flush;
+	  return debounced;
+	}
+
+	var debounce_1 = debounce;
+
+	const saveToLocalstorage = (key, value) => {
+	  let data;
+
+	  try {
+	    const str = localStorage.getItem('blhxfy:setting');
+	    data = JSON.parse(str);
+	  } catch (err) {
+	    console.error(err);
+	  }
+
+	  if (!isPlainObject_1(data)) {
+	    data = {};
+	  }
+
+	  data[key] = value;
+	  localStorage.setItem('blhxfy:setting', JSON.stringify(data));
+	};
+
+	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'userName']]);
+
+	const setting = (type, value) => {
+	  if (type === 'show') {
+	    for (let [id, key] of keyMap) {
+	      const ipt = $(`#${id}-setting-blhxfy`);
+
+	      if (ipt.attr('type') === 'checkbox') {
+	        ipt[0].checked = config[key];
+	      } else {
+	        ipt.val(config[key]);
+	      }
+	    }
+
+	    $('#blhxfy-setting-modal').addClass('show');
+	  } else if (type === 'origin' || type === 'auto-download' || type === 'bottom-toolbar') {
+	    saveToLocalstorage(keyMap.get(type), value);
+	  } else if (type === 'username') {
+	    localStorage.setItem('blhxfy:name', value);
+	  }
+	};
+
+	const dbSetting = debounce_1(setting, 500);
+
 	const main = () => {
 	  if (window.blhxfy) return;
 	  injectXHR();
 	  window.blhxfy = {
 	    dlStoryCsv,
-	    previewCsv
+	    previewCsv,
+	    setting: dbSetting
 	  };
 	};
 

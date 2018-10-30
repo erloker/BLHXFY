@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.0.5
+// @version      1.1.0
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -6878,13 +6878,47 @@
     return ret;
   }
 
-  var config = {
-    origin: 'https://blhx.danmu9.com',
-    apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
-    hash: '',
-    userName: '',
-    timeout: 10
-  };
+  var dP$3 = _objectDp.f;
+  var gOPN$2 = _objectGopn.f;
+
+
+  var $RegExp = _global.RegExp;
+  var Base = $RegExp;
+  var proto$1 = $RegExp.prototype;
+  var re1 = /a/g;
+  var re2 = /a/g;
+  // "new" creates a new object, old webkit buggy here
+  var CORRECT_NEW = new $RegExp(re1) !== re1;
+
+  if (_descriptors && (!CORRECT_NEW || _fails(function () {
+    re2[_wks('match')] = false;
+    // RegExp constructor can alter flags and IsRegExp works correct with @@match
+    return $RegExp(re1) != re1 || $RegExp(re2) == re2 || $RegExp(re1, 'i') != '/a/i';
+  }))) {
+    $RegExp = function RegExp(p, f) {
+      var tiRE = this instanceof $RegExp;
+      var piRE = _isRegexp(p);
+      var fiU = f === undefined;
+      return !tiRE && piRE && p.constructor === $RegExp && fiU ? p
+        : _inheritIfRequired(CORRECT_NEW
+          ? new Base(piRE && !fiU ? p.source : p, f)
+          : Base((piRE = p instanceof $RegExp) ? p.source : p, piRE && fiU ? _flags.call(p) : f)
+        , tiRE ? this : proto$1, $RegExp);
+    };
+    var proxy = function (key) {
+      key in $RegExp || dP$3($RegExp, key, {
+        configurable: true,
+        get: function () { return Base[key]; },
+        set: function (it) { Base[key] = it; }
+      });
+    };
+    for (var keys = gOPN$2(Base), i$1 = 0; keys.length > i$1;) proxy(keys[i$1++]);
+    proto$1.constructor = $RegExp;
+    $RegExp.prototype = proto$1;
+    _redefine(_global, 'RegExp', $RegExp);
+  }
+
+  _setSpecies('RegExp');
 
   var html = ['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr'];
 
@@ -7866,6 +7900,128 @@
 
   var purify = createDOMPurify();
 
+  var trim = function trim(str) {
+    if (!str) return '';
+    return str.trim();
+  };
+
+  var tryDownload = function tryDownload(content, filename) {
+    var eleLink = document.createElement('a');
+    eleLink.download = filename;
+    eleLink.style.display = 'none';
+    var blob = new Blob([content], {
+      type: 'text/csv'
+    });
+    eleLink.href = URL.createObjectURL(blob);
+    document.body.appendChild(eleLink);
+    eleLink.click();
+    document.body.removeChild(eleLink);
+  };
+
+  var replaceWords = function replaceWords(str, map) {
+    var lang = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'en';
+    if (!str) return str;
+    var _str = str;
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = map[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var _step$value = _slicedToArray(_step.value, 2),
+            key = _step$value[0],
+            val = _step$value[1];
+
+        if (!key || key.length < 2) continue;
+        var expr = key.replace(/\?/g, '\\?').replace(/\./g, '\\.').replace(/\*/g, '\\*').replace(/\+/g, '\\+');
+        var reStr = lang === 'en' ? "\\b".concat(expr, "\\b") : "".concat(expr);
+
+        if (typeof val === 'string') {
+          _str = _str.replace(new RegExp(reStr, 'g'), val);
+        } else if (val && val.trans && !val.noun) {
+          if (val.ignoreCase) {
+            _str = _str.replace(new RegExp(reStr, 'gi'), val.trans);
+          } else {
+            _str = _str.replace(new RegExp(reStr, 'g'), val.trans);
+          }
+        }
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return != null) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    return _str;
+  };
+
+  var getPreview = function getPreview() {
+    var str = sessionStorage.getItem('blhxfy:preview');
+    var data = [];
+
+    if (str) {
+      try {
+        data = JSON.parse(str);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    return data;
+  };
+
+  var getPreviewCsv = function getPreviewCsv(name) {
+    var data = getPreview();
+    var csv = '';
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+      for (var _iterator2 = data[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var item = _step2.value;
+
+        if (item.name === name) {
+          csv = purify.sanitize(item.csv);
+        }
+      }
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
+        }
+      }
+    }
+
+    return csv;
+  };
+
+  var splitSingleLineSkill = function splitSingleLineSkill(csv) {
+    return csv.replace(/\s(skill|special|npc|support|intro|,|active)/g, '\n$1');
+  };
+
+  var isDomain = function isDomain(str) {
+    if (!/^https?:\/\//.test(str)) return false;
+    if (/\s/.test(str.trim())) return false;
+    return true;
+  };
+
   /** Detect free variable `global` from Node.js. */
   var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
 
@@ -8060,6 +8216,120 @@
 
   var isString_1 = isString;
 
+  /**
+   * Creates a unary function that invokes `func` with its argument transformed.
+   *
+   * @private
+   * @param {Function} func The function to wrap.
+   * @param {Function} transform The argument transform.
+   * @returns {Function} Returns the new function.
+   */
+  function overArg(func, transform) {
+    return function(arg) {
+      return func(transform(arg));
+    };
+  }
+
+  var _overArg = overArg;
+
+  /** Built-in value references. */
+  var getPrototype = _overArg(Object.getPrototypeOf, Object);
+
+  var _getPrototype = getPrototype;
+
+  /** `Object#toString` result references. */
+  var objectTag = '[object Object]';
+
+  /** Used for built-in method references. */
+  var funcProto = Function.prototype,
+      objectProto$2 = Object.prototype;
+
+  /** Used to resolve the decompiled source of functions. */
+  var funcToString = funcProto.toString;
+
+  /** Used to check objects for own properties. */
+  var hasOwnProperty$2 = objectProto$2.hasOwnProperty;
+
+  /** Used to infer the `Object` constructor. */
+  var objectCtorString = funcToString.call(Object);
+
+  /**
+   * Checks if `value` is a plain object, that is, an object created by the
+   * `Object` constructor or one with a `[[Prototype]]` of `null`.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.8.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+   * @example
+   *
+   * function Foo() {
+   *   this.a = 1;
+   * }
+   *
+   * _.isPlainObject(new Foo);
+   * // => false
+   *
+   * _.isPlainObject([1, 2, 3]);
+   * // => false
+   *
+   * _.isPlainObject({ 'x': 0, 'y': 0 });
+   * // => true
+   *
+   * _.isPlainObject(Object.create(null));
+   * // => true
+   */
+  function isPlainObject(value) {
+    if (!isObjectLike_1(value) || _baseGetTag(value) != objectTag) {
+      return false;
+    }
+    var proto = _getPrototype(value);
+    if (proto === null) {
+      return true;
+    }
+    var Ctor = hasOwnProperty$2.call(proto, 'constructor') && proto.constructor;
+    return typeof Ctor == 'function' && Ctor instanceof Ctor &&
+      funcToString.call(Ctor) == objectCtorString;
+  }
+
+  var isPlainObject_1 = isPlainObject;
+
+  var config = {
+    origin: 'https://blhx.danmu9.com',
+    apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
+    hash: '',
+    userName: '',
+    timeout: 8,
+    autoDownload: false,
+    bottomToolbar: false
+  };
+
+  var getLocalConfig = function getLocalConfig() {
+    var str = localStorage.getItem('blhxfy:setting');
+    var setting = JSON.parse(str);
+    if (!isPlainObject_1(setting)) setting = {};
+    var _setting = setting,
+        origin = _setting.origin;
+
+    if (isDomain(origin)) {
+      config.origin = origin.trim();
+    }
+
+    var keys = ['autoDownload', 'bottomToolbar'];
+    keys.forEach(function (key) {
+      var value = setting[key];
+      if (isString_1(value)) value = value.trim();
+
+      if (value) {
+        config[key] = value;
+      }
+    });
+  };
+
+  getLocalConfig();
+
   var origin = config.origin;
   var ee = new events();
   var lecia;
@@ -8182,18 +8452,9 @@
 
             case 5:
               data = _context2.sent;
-
-              if (!(!pathname.includes('common-html') && !pathname.includes('lang-msg') && isString_1(data))) {
-                _context2.next = 8;
-                break;
-              }
-
-              return _context2.abrupt("return", purify.sanitize(data));
-
-            case 8:
               return _context2.abrupt("return", data);
 
-            case 9:
+            case 7:
             case "end":
               return _context2.stop();
           }
@@ -10061,6 +10322,16 @@
     });
   };
 
+  var whiteList = ['需要<%= quest_ap - sp %><%= point_name %>来开始。', '使用道具恢复<%= point_name %>？', "\u6765\u81EA<span class='txt-request-name'><%= n.attributes.called_user_name %></span>\u7684\u6551\u63F4\u8BF7\u6C42", "\u6765\u81EA<span class='txt-request-name'><%= raid['called_user_name'] %></span>\u7684\u6551\u63F4\u8BF7\u6C42", '还剩<%= can_quest_start_count %>回挑战（一共<%= max_quest_start_count %>回）', '<%= set_user.name %> Rank <%= set_user.rank %> 选择任务', '<%= title %>'];
+
+  var filter = function filter(str) {
+    if (!whiteList.includes(str)) {
+      return purify.sanitize(str);
+    }
+
+    return str;
+  };
+
   var enNameMap = new Map();
   var jpNameMap = new Map();
   var loaded = false;
@@ -10079,7 +10350,7 @@
           obj[item.scenario] = item;
           obj.scenarios.push(item.scenario);
         } else {
-          obj.trans = item.trans;
+          obj.trans = filter(trim(item.trans));
           obj.noun = !!item.noun;
         }
       } else {
@@ -10092,7 +10363,7 @@
 
           _obj.scenarios.push(item.scenario);
         } else {
-          _obj.trans = item.trans;
+          _obj.trans = filter(trim(item.trans));
           _obj.noun = !!item.noun;
         }
 
@@ -10166,6 +10437,25 @@
 
     if (cont[0]) {
       cont.prepend(html$2);
+    }
+  }
+
+  function autoDownloadCsv () {
+    if (config.autoDownload) {
+      var downloaded = false;
+      $('#wrapper').off('click.blhxfy-dlcsv').on('click.blhxfy-dlcsv', '.cnt-quest-scene .btn-skip', function () {
+        setTimeout(function () {
+          if (!document.querySelector('.pop-synopsis')) {
+            window.blhxfy.dlStoryCsv('fill');
+            downloaded = true;
+          }
+        }, 100);
+      });
+      $('#wrapper').off('click.blhxfy-dlcsv2').on('click.blhxfy-dlcsv2', '.pop-synopsis .btn-usual-ok', function () {
+        if (!downloaded) {
+          window.blhxfy.dlStoryCsv('fill');
+        }
+      });
     }
   }
 
@@ -10515,10 +10805,10 @@
   var _isMasked = isMasked;
 
   /** Used for built-in method references. */
-  var funcProto = Function.prototype;
+  var funcProto$1 = Function.prototype;
 
   /** Used to resolve the decompiled source of functions. */
-  var funcToString = funcProto.toString;
+  var funcToString$1 = funcProto$1.toString;
 
   /**
    * Converts `func` to its source code.
@@ -10530,7 +10820,7 @@
   function toSource(func) {
     if (func != null) {
       try {
-        return funcToString.call(func);
+        return funcToString$1.call(func);
       } catch (e) {}
       try {
         return (func + '');
@@ -10551,18 +10841,18 @@
   var reIsHostCtor = /^\[object .+?Constructor\]$/;
 
   /** Used for built-in method references. */
-  var funcProto$1 = Function.prototype,
-      objectProto$2 = Object.prototype;
+  var funcProto$2 = Function.prototype,
+      objectProto$3 = Object.prototype;
 
   /** Used to resolve the decompiled source of functions. */
-  var funcToString$1 = funcProto$1.toString;
+  var funcToString$2 = funcProto$2.toString;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$2 = objectProto$2.hasOwnProperty;
+  var hasOwnProperty$3 = objectProto$3.hasOwnProperty;
 
   /** Used to detect if a method is native. */
   var reIsNative = RegExp('^' +
-    funcToString$1.call(hasOwnProperty$2).replace(reRegExpChar, '\\$&')
+    funcToString$2.call(hasOwnProperty$3).replace(reRegExpChar, '\\$&')
     .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
   );
 
@@ -10659,10 +10949,10 @@
   var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
   /** Used for built-in method references. */
-  var objectProto$3 = Object.prototype;
+  var objectProto$4 = Object.prototype;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$3 = objectProto$3.hasOwnProperty;
+  var hasOwnProperty$4 = objectProto$4.hasOwnProperty;
 
   /**
    * Gets the hash value for `key`.
@@ -10679,16 +10969,16 @@
       var result = data[key];
       return result === HASH_UNDEFINED ? undefined : result;
     }
-    return hasOwnProperty$3.call(data, key) ? data[key] : undefined;
+    return hasOwnProperty$4.call(data, key) ? data[key] : undefined;
   }
 
   var _hashGet = hashGet;
 
   /** Used for built-in method references. */
-  var objectProto$4 = Object.prototype;
+  var objectProto$5 = Object.prototype;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$4 = objectProto$4.hasOwnProperty;
+  var hasOwnProperty$5 = objectProto$5.hasOwnProperty;
 
   /**
    * Checks if a hash value for `key` exists.
@@ -10701,7 +10991,7 @@
    */
   function hashHas(key) {
     var data = this.__data__;
-    return _nativeCreate ? (data[key] !== undefined) : hasOwnProperty$4.call(data, key);
+    return _nativeCreate ? (data[key] !== undefined) : hasOwnProperty$5.call(data, key);
   }
 
   var _hashHas = hashHas;
@@ -11011,10 +11301,10 @@
   var _baseAssignValue = baseAssignValue;
 
   /** Used for built-in method references. */
-  var objectProto$5 = Object.prototype;
+  var objectProto$6 = Object.prototype;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$5 = objectProto$5.hasOwnProperty;
+  var hasOwnProperty$6 = objectProto$6.hasOwnProperty;
 
   /**
    * Assigns `value` to `key` of `object` if the existing value is not equivalent
@@ -11028,7 +11318,7 @@
    */
   function assignValue(object, key, value) {
     var objValue = object[key];
-    if (!(hasOwnProperty$5.call(object, key) && eq_1(objValue, value)) ||
+    if (!(hasOwnProperty$6.call(object, key) && eq_1(objValue, value)) ||
         (value === undefined && !(key in object))) {
       _baseAssignValue(object, key, value);
     }
@@ -11112,13 +11402,13 @@
   var _baseIsArguments = baseIsArguments;
 
   /** Used for built-in method references. */
-  var objectProto$6 = Object.prototype;
+  var objectProto$7 = Object.prototype;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$6 = objectProto$6.hasOwnProperty;
+  var hasOwnProperty$7 = objectProto$7.hasOwnProperty;
 
   /** Built-in value references. */
-  var propertyIsEnumerable = objectProto$6.propertyIsEnumerable;
+  var propertyIsEnumerable = objectProto$7.propertyIsEnumerable;
 
   /**
    * Checks if `value` is likely an `arguments` object.
@@ -11139,7 +11429,7 @@
    * // => false
    */
   var isArguments = _baseIsArguments(function() { return arguments; }()) ? _baseIsArguments : function(value) {
-    return isObjectLike_1(value) && hasOwnProperty$6.call(value, 'callee') &&
+    return isObjectLike_1(value) && hasOwnProperty$7.call(value, 'callee') &&
       !propertyIsEnumerable.call(value, 'callee');
   };
 
@@ -11273,7 +11563,7 @@
       funcTag$1 = '[object Function]',
       mapTag = '[object Map]',
       numberTag = '[object Number]',
-      objectTag = '[object Object]',
+      objectTag$1 = '[object Object]',
       regexpTag = '[object RegExp]',
       setTag = '[object Set]',
       stringTag$1 = '[object String]',
@@ -11303,7 +11593,7 @@
   typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
   typedArrayTags[errorTag] = typedArrayTags[funcTag$1] =
   typedArrayTags[mapTag] = typedArrayTags[numberTag] =
-  typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+  typedArrayTags[objectTag$1] = typedArrayTags[regexpTag] =
   typedArrayTags[setTag] = typedArrayTags[stringTag$1] =
   typedArrayTags[weakMapTag] = false;
 
@@ -11392,10 +11682,10 @@
   var isTypedArray_1 = isTypedArray;
 
   /** Used for built-in method references. */
-  var objectProto$7 = Object.prototype;
+  var objectProto$8 = Object.prototype;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$7 = objectProto$7.hasOwnProperty;
+  var hasOwnProperty$8 = objectProto$8.hasOwnProperty;
 
   /**
    * Creates an array of the enumerable property names of the array-like `value`.
@@ -11415,7 +11705,7 @@
         length = result.length;
 
     for (var key in value) {
-      if ((inherited || hasOwnProperty$7.call(value, key)) &&
+      if ((inherited || hasOwnProperty$8.call(value, key)) &&
           !(skipIndexes && (
              // Safari 9 has enumerable `arguments.length` in strict mode.
              key == 'length' ||
@@ -11435,7 +11725,7 @@
   var _arrayLikeKeys = arrayLikeKeys;
 
   /** Used for built-in method references. */
-  var objectProto$8 = Object.prototype;
+  var objectProto$9 = Object.prototype;
 
   /**
    * Checks if `value` is likely a prototype object.
@@ -11446,28 +11736,12 @@
    */
   function isPrototype(value) {
     var Ctor = value && value.constructor,
-        proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto$8;
+        proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto$9;
 
     return value === proto;
   }
 
   var _isPrototype = isPrototype;
-
-  /**
-   * Creates a unary function that invokes `func` with its argument transformed.
-   *
-   * @private
-   * @param {Function} func The function to wrap.
-   * @param {Function} transform The argument transform.
-   * @returns {Function} Returns the new function.
-   */
-  function overArg(func, transform) {
-    return function(arg) {
-      return func(transform(arg));
-    };
-  }
-
-  var _overArg = overArg;
 
   /* Built-in method references for those with the same name as other `lodash` methods. */
   var nativeKeys = _overArg(Object.keys, Object);
@@ -11475,10 +11749,10 @@
   var _nativeKeys = nativeKeys;
 
   /** Used for built-in method references. */
-  var objectProto$9 = Object.prototype;
+  var objectProto$a = Object.prototype;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$8 = objectProto$9.hasOwnProperty;
+  var hasOwnProperty$9 = objectProto$a.hasOwnProperty;
 
   /**
    * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
@@ -11493,7 +11767,7 @@
     }
     var result = [];
     for (var key in Object(object)) {
-      if (hasOwnProperty$8.call(object, key) && key != 'constructor') {
+      if (hasOwnProperty$9.call(object, key) && key != 'constructor') {
         result.push(key);
       }
     }
@@ -11561,11 +11835,11 @@
    * _.keys('hi');
    * // => ['0', '1']
    */
-  function keys(object) {
+  function keys$1(object) {
     return isArrayLike_1(object) ? _arrayLikeKeys(object) : _baseKeys(object);
   }
 
-  var keys_1 = keys;
+  var keys_1 = keys$1;
 
   /**
    * The base implementation of `_.assign` without support for multiple sources
@@ -11604,10 +11878,10 @@
   var _nativeKeysIn = nativeKeysIn;
 
   /** Used for built-in method references. */
-  var objectProto$a = Object.prototype;
+  var objectProto$b = Object.prototype;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$9 = objectProto$a.hasOwnProperty;
+  var hasOwnProperty$a = objectProto$b.hasOwnProperty;
 
   /**
    * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
@@ -11624,7 +11898,7 @@
         result = [];
 
     for (var key in object) {
-      if (!(key == 'constructor' && (isProto || !hasOwnProperty$9.call(object, key)))) {
+      if (!(key == 'constructor' && (isProto || !hasOwnProperty$a.call(object, key)))) {
         result.push(key);
       }
     }
@@ -11785,10 +12059,10 @@
   var stubArray_1 = stubArray;
 
   /** Used for built-in method references. */
-  var objectProto$b = Object.prototype;
+  var objectProto$c = Object.prototype;
 
   /** Built-in value references. */
-  var propertyIsEnumerable$1 = objectProto$b.propertyIsEnumerable;
+  var propertyIsEnumerable$1 = objectProto$c.propertyIsEnumerable;
 
   /* Built-in method references for those with the same name as other `lodash` methods. */
   var nativeGetSymbols = Object.getOwnPropertySymbols;
@@ -11846,11 +12120,6 @@
   }
 
   var _arrayPush = arrayPush;
-
-  /** Built-in value references. */
-  var getPrototype = _overArg(Object.getPrototypeOf, Object);
-
-  var _getPrototype = getPrototype;
 
   /* Built-in method references for those with the same name as other `lodash` methods. */
   var nativeGetSymbols$1 = Object.getOwnPropertySymbols;
@@ -11954,7 +12223,7 @@
 
   /** `Object#toString` result references. */
   var mapTag$1 = '[object Map]',
-      objectTag$1 = '[object Object]',
+      objectTag$2 = '[object Object]',
       promiseTag = '[object Promise]',
       setTag$1 = '[object Set]',
       weakMapTag$1 = '[object WeakMap]';
@@ -11985,7 +12254,7 @@
       (_WeakMap && getTag(new _WeakMap) != weakMapTag$1)) {
     getTag = function(value) {
       var result = _baseGetTag(value),
-          Ctor = result == objectTag$1 ? value.constructor : undefined,
+          Ctor = result == objectTag$2 ? value.constructor : undefined,
           ctorString = Ctor ? _toSource(Ctor) : '';
 
       if (ctorString) {
@@ -12004,10 +12273,10 @@
   var _getTag = getTag;
 
   /** Used for built-in method references. */
-  var objectProto$c = Object.prototype;
+  var objectProto$d = Object.prototype;
 
   /** Used to check objects for own properties. */
-  var hasOwnProperty$a = objectProto$c.hasOwnProperty;
+  var hasOwnProperty$b = objectProto$d.hasOwnProperty;
 
   /**
    * Initializes an array clone.
@@ -12021,7 +12290,7 @@
         result = new array.constructor(length);
 
     // Add properties assigned by `RegExp#exec`.
-    if (length && typeof array[0] == 'string' && hasOwnProperty$a.call(array, 'index')) {
+    if (length && typeof array[0] == 'string' && hasOwnProperty$b.call(array, 'index')) {
       result.index = array.index;
       result.input = array.input;
     }
@@ -12326,7 +12595,7 @@
       genTag$1 = '[object GeneratorFunction]',
       mapTag$4 = '[object Map]',
       numberTag$2 = '[object Number]',
-      objectTag$2 = '[object Object]',
+      objectTag$3 = '[object Object]',
       regexpTag$2 = '[object RegExp]',
       setTag$4 = '[object Set]',
       stringTag$3 = '[object String]',
@@ -12353,7 +12622,7 @@
   cloneableTags[float32Tag$2] = cloneableTags[float64Tag$2] =
   cloneableTags[int8Tag$2] = cloneableTags[int16Tag$2] =
   cloneableTags[int32Tag$2] = cloneableTags[mapTag$4] =
-  cloneableTags[numberTag$2] = cloneableTags[objectTag$2] =
+  cloneableTags[numberTag$2] = cloneableTags[objectTag$3] =
   cloneableTags[regexpTag$2] = cloneableTags[setTag$4] =
   cloneableTags[stringTag$3] = cloneableTags[symbolTag$1] =
   cloneableTags[uint8Tag$2] = cloneableTags[uint8ClampedTag$2] =
@@ -12405,7 +12674,7 @@
       if (isBuffer_1(value)) {
         return _cloneBuffer(value, isDeep);
       }
-      if (tag == objectTag$2 || tag == argsTag$2 || (isFunc && !object)) {
+      if (tag == objectTag$3 || tag == argsTag$2 || (isFunc && !object)) {
         result = (isFlat || isFunc) ? {} : _initCloneObject(value);
         if (!isDeep) {
           return isFlat
@@ -12489,164 +12758,6 @@
 
   var cloneDeep_1 = cloneDeep;
 
-  var dP$3 = _objectDp.f;
-  var gOPN$2 = _objectGopn.f;
-
-
-  var $RegExp = _global.RegExp;
-  var Base = $RegExp;
-  var proto$1 = $RegExp.prototype;
-  var re1 = /a/g;
-  var re2 = /a/g;
-  // "new" creates a new object, old webkit buggy here
-  var CORRECT_NEW = new $RegExp(re1) !== re1;
-
-  if (_descriptors && (!CORRECT_NEW || _fails(function () {
-    re2[_wks('match')] = false;
-    // RegExp constructor can alter flags and IsRegExp works correct with @@match
-    return $RegExp(re1) != re1 || $RegExp(re2) == re2 || $RegExp(re1, 'i') != '/a/i';
-  }))) {
-    $RegExp = function RegExp(p, f) {
-      var tiRE = this instanceof $RegExp;
-      var piRE = _isRegexp(p);
-      var fiU = f === undefined;
-      return !tiRE && piRE && p.constructor === $RegExp && fiU ? p
-        : _inheritIfRequired(CORRECT_NEW
-          ? new Base(piRE && !fiU ? p.source : p, f)
-          : Base((piRE = p instanceof $RegExp) ? p.source : p, piRE && fiU ? _flags.call(p) : f)
-        , tiRE ? this : proto$1, $RegExp);
-    };
-    var proxy = function (key) {
-      key in $RegExp || dP$3($RegExp, key, {
-        configurable: true,
-        get: function () { return Base[key]; },
-        set: function (it) { Base[key] = it; }
-      });
-    };
-    for (var keys$1 = gOPN$2(Base), i$1 = 0; keys$1.length > i$1;) proxy(keys$1[i$1++]);
-    proto$1.constructor = $RegExp;
-    $RegExp.prototype = proto$1;
-    _redefine(_global, 'RegExp', $RegExp);
-  }
-
-  _setSpecies('RegExp');
-
-  var trim = function trim(str) {
-    if (!str) return '';
-    return str.trim();
-  };
-
-  var tryDownload = function tryDownload(content, filename) {
-    var eleLink = document.createElement('a');
-    eleLink.download = filename;
-    eleLink.style.display = 'none';
-    var blob = new Blob([content], {
-      type: 'text/csv'
-    });
-    eleLink.href = URL.createObjectURL(blob);
-    document.body.appendChild(eleLink);
-    eleLink.click();
-    document.body.removeChild(eleLink);
-  };
-
-  var replaceWords = function replaceWords(str, map) {
-    var lang = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'en';
-    if (!str) return str;
-    var _str = str;
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
-
-    try {
-      for (var _iterator = map[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var _step$value = _slicedToArray(_step.value, 2),
-            key = _step$value[0],
-            val = _step$value[1];
-
-        if (!key || key.length < 2) continue;
-        var expr = key.replace(/\?/g, '\\?').replace(/\./g, '\\.').replace(/\*/g, '\\*').replace(/\+/g, '\\+');
-        var reStr = lang === 'en' ? "\\b".concat(expr, "\\b") : "".concat(expr);
-
-        if (typeof val === 'string') {
-          _str = _str.replace(new RegExp(reStr, 'g'), val);
-        } else if (val && val.trans && !val.noun) {
-          if (val.ignoreCase) {
-            _str = _str.replace(new RegExp(reStr, 'gi'), val.trans);
-          } else {
-            _str = _str.replace(new RegExp(reStr, 'g'), val.trans);
-          }
-        }
-      }
-    } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion && _iterator.return != null) {
-          _iterator.return();
-        }
-      } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
-        }
-      }
-    }
-
-    return _str;
-  };
-
-  var getPreview = function getPreview() {
-    var str = sessionStorage.getItem('blhxfy:preview');
-    var data = [];
-
-    if (str) {
-      try {
-        data = JSON.parse(str);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    return data;
-  };
-
-  var getPreviewCsv = function getPreviewCsv(name) {
-    var data = getPreview();
-    var csv = '';
-    var _iteratorNormalCompletion2 = true;
-    var _didIteratorError2 = false;
-    var _iteratorError2 = undefined;
-
-    try {
-      for (var _iterator2 = data[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-        var item = _step2.value;
-
-        if (item.name === name) {
-          csv = purify.sanitize(item.csv);
-        }
-      }
-    } catch (err) {
-      _didIteratorError2 = true;
-      _iteratorError2 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-          _iterator2.return();
-        }
-      } finally {
-        if (_didIteratorError2) {
-          throw _iteratorError2;
-        }
-      }
-    }
-
-    return csv;
-  };
-
-  var splitSingleLineSkill = function splitSingleLineSkill(csv) {
-    return csv.replace(/\s(skill|special|npc|support|intro|,|active)/g, '\n$1');
-  };
-
   var txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
 
   var getScenario =
@@ -12700,7 +12811,7 @@
                   var id = idArr[0];
                   var type = idArr[1] || 'detail';
                   var obj = transMap.get(id) || {};
-                  obj[type] = item.trans ? item.trans.replace(/姬塔/g, config.userName) : false;
+                  obj[type] = item.trans ? filter(item.trans.replace(/姬塔/g, config.userName)) : false;
                   transMap.set(id, obj);
                 }
               });
@@ -12886,32 +12997,33 @@
 
             case 9:
               insertToolHtml();
+              autoDownloadCsv();
               scenarioName = sNameTemp;
               scenarioCache.data = cloneDeep_1(data);
               scenarioCache.name = scenarioName;
               scenarioCache.hasTrans = false;
-              _context2.next = 16;
+              _context2.next = 17;
               return getScenario(scenarioName);
 
-            case 16:
+            case 17:
               _ref3 = _context2.sent;
               transMap = _ref3.transMap;
               csv = _ref3.csv;
 
               if (transMap) {
-                _context2.next = 21;
+                _context2.next = 22;
                 break;
               }
 
               return _context2.abrupt("return", data);
 
-            case 21:
+            case 22:
               scenarioCache.hasTrans = true;
               scenarioCache.csv = csv;
-              _context2.next = 25;
+              _context2.next = 26;
               return getNameData();
 
-            case 25:
+            case 26:
               nameData = _context2.sent;
               nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
               data.forEach(function (item) {
@@ -12929,7 +13041,7 @@
               });
               return _context2.abrupt("return", data);
 
-            case 29:
+            case 30:
             case "end":
               return _context2.stop();
           }
@@ -13162,14 +13274,14 @@
             case 9:
               list = parseCsv(langMsg);
               list.forEach(function (item) {
-                if (item.id && item.id.trim()) {
+                if (trim(item.id)) {
                   item.en && langMsgMap.set("".concat(item.id).concat(item.en), {
-                    trans: item.trans,
+                    trans: filter(item.trans),
                     en: item.en,
                     jp: item.jp
                   });
                   item.jp && langMsgMap.set("".concat(item.jp), {
-                    trans: item.trans,
+                    trans: filter(item.trans),
                     en: item.en,
                     jp: item.jp
                   });
@@ -13305,9 +13417,9 @@
               sortedList = sortKeywords(list, 'comment');
               sortedList.forEach(function (item) {
                 if (item.comment && item.trans && item.type) {
-                  var comment = item.comment.trim();
-                  var trans = item.trans.trim();
-                  var type = item.type.trim() || '1';
+                  var comment = trim(item.comment);
+                  var trans = filter(trim(item.trans));
+                  var type = trim(item.type) || '1';
 
                   if (comment && trans) {
                     state.commSkillMap.set(comment, {
@@ -13438,7 +13550,7 @@
 
             case 10:
               csvData = _context2.sent;
-              list = parseCsv(csvData);
+              list = parseCsv(filter(csvData));
               setSkillMap(list);
 
             case 13:
@@ -13465,7 +13577,7 @@
         var data = JSON.parse(str);
 
         if (data.id === npcId) {
-          var csv = purify.sanitize(data.csv);
+          var csv = filter(data.csv);
           var list = parseCsv(csv);
           list.forEach(function (item) {
             if (item.id === 'npc') {
@@ -13526,7 +13638,7 @@
               list = parseCsv(csv);
               list.forEach(function (item) {
                 var detail = trim(item.detail);
-                var trans = trim(item.trans);
+                var trans = filter(trim(item.trans));
 
                 if (detail && trans) {
                   buffMap[type].set(detail, trans);
@@ -14150,11 +14262,11 @@
               list = parseCsv(csv);
               list.forEach(function (item) {
                 if (item && item.id) {
-                  var _id = item.id.trim();
+                  var _id = trim(item.id);
 
                   if (_id) skillMap$1.set(_id, {
-                    name: item.name.trim(),
-                    detail: item.detail.trim()
+                    name: filter(trim(item.name)),
+                    detail: filter(trim(item.detail))
                   });
                 }
               });
@@ -14466,11 +14578,6 @@
   var htmlMap = new Map();
   var loaded$4 = false;
 
-  var trim$1 = function trim(str) {
-    if (!str) return '';
-    return str.trim();
-  };
-
   var getCommHtmlData =
   /*#__PURE__*/
   function () {
@@ -14509,9 +14616,9 @@
               list = parseCsv(csv);
               tempMap = new Map();
               sortKeywords(list, 'text').forEach(function (item, index) {
-                var pathname = trim$1(item.path);
-                var text = trim$1(item.text);
-                var trans = trim$1(item.trans);
+                var pathname = trim(item.path);
+                var text = trim(item.text);
+                var trans = filter(trim(item.trans));
                 var times = item.count | 0 || 1;
 
                 if (pathname && text && trans) {
@@ -14556,11 +14663,6 @@
   var htmlMap$1 = new Map();
   var loaded$5 = false;
 
-  var trim$2 = function trim(str) {
-    if (!str) return '';
-    return str.trim();
-  };
-
   var getArchiveData =
   /*#__PURE__*/
   function () {
@@ -14584,8 +14686,8 @@
               csv = _context.sent;
               list = parseCsv(csv);
               sortKeywords(list, 'text').forEach(function (item) {
-                var text = trim$2(item.text);
-                var trans = trim$2(item.trans);
+                var text = trim(item.text);
+                var trans = filter(trim(item.trans));
                 var times = item.count | 0 || 1;
 
                 if (text && trans) {
@@ -14612,6 +14714,11 @@
       return _ref.apply(this, arguments);
     };
   }();
+
+  var template = "\n<style>\n#btn-setting-blhxfy {\n  position: absolute;\n  left: 16px;\n  top: 104px;\n}\n#blhxfy-setting-modal {\n  display: none;\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #f6feff;\n  width: 100%;\n  min-height: 100%;\n  z-index: 99999;\n  padding-bottom: 38px;\n}\n#blhxfy-setting-modal input[type=text] {\n  display: block !important;\n  outline: none;\n  width: 274px;\n  font-size: 12px;\n  padding: 4px;\n  box-shadow: none;\n  border: 1px solid #78bbd8;\n  border-radius: 2px;\n  font-family: sans-serif;\n  color: #4d6671;\n}\n#blhxfy-setting-modal.show {\n  display: block;\n}\n#blhxfy-setting-modal input[type=text]::placeholder {\n  color: #aaa;\n}\n</style>\n<div id=\"blhxfy-setting-modal\">\n<div class=\"cnt-setting\">\n\t<div class=\"prt-setting-header\"><img class=\"img-header\" src=\"https://blhx.danmu9.com/blhxfy/data/static/image/setting-header.jpg\" alt=\"header_public\"></div>\n\n\n\t<div class=\"prt-setting-module\">\n\t\t<div class=\"txt-setting-title\">\u63D2\u4EF6\u8BBE\u7F6E</div>\n\t\t<div class=\"prt-setting-frame\">\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u7FFB\u8BD1\u6570\u636E\u57DF\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u7684\u6570\u636E\u6E90</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"origin-setting-blhxfy\" oninput=\"window.blhxfy.setting('origin', this.value)\" type=\"text\" value=\"\" placeholder=\"https://blhx.danmu9.com\">\n        </div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4F7F\u7528\u7B2C\u4E09\u65B9\u6570\u636E\u6E90\u6709\u98CE\u9669\uFF0C\u8BF7\u9009\u62E9\u53EF\u4EE5\u4FE1\u4EFB\u7684\u6570\u636E\u6E90\u3002\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u4E3B\u89D2\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5267\u60C5\u91CC\u663E\u793A\u7684\u4E3B\u89D2\u540D\u5B57\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u4F60\u81EA\u5DF1\u7684\u6635\u79F0</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"username-setting-blhxfy\" oninput=\"window.blhxfy.setting('username', this.value)\" type=\"text\" value=\"\" placeholder=\"\u8BF7\u8F93\u5165\u4E3B\u89D2\u540D\">\n\t\t\t\t</div>\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u5267\u60C5CSV\u6587\u4EF6\u5FEB\u6377\u4E0B\u8F7D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728 SKIP \u7684\u65F6\u5019\u81EA\u52A8\u4E0B\u8F7D\u5267\u60C5CSV</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"auto-download-setting-blhxfy\" onchange=\"window.blhxfy.setting('auto-download', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"auto-download-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u81EA\u52A8\u4E0B\u8F7DCSV</label>\n\t\t\t\t\t</div>\n        </div>\n      </div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5728\u624B\u673A\u6D4F\u89C8\u5668\u4E0A\u4E5F\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"bottom-toolbar-setting-blhxfy\" onchange=\"window.blhxfy.setting('bottom-toolbar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"bottom-toolbar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u5E95\u90E8\u5DE5\u5177\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4FEE\u6539\u7684\u8BBE\u7F6E\u5728\u5237\u65B0\u9875\u9762\u540E\u751F\u6548\n      </div>\n\t\t</div>\n\t</div>\n\n\n\t<div class=\"prt-lead-link\">\n\t\t<div class=\"lis-lead-prev\" data-href=\"setting\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u8BBE\u7F6E</div></div>\n\t\t<div class=\"lis-lead-prev\" data-href=\"mypage\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u9996\u9875</div></div>\n\t</div>\n</div>\n</div>\n";
+  function insertSettingHtml (html) {
+    return html.replace('<div class="cnt-setting">', "".concat(template, "<div class=\"cnt-setting\"><div class=\"cnt-setting\"><div class=\"btn-usual-text\" id=\"btn-setting-blhxfy\" onclick=\"window.blhxfy.setting('show')\">\u6C49\u5316\u63D2\u4EF6\u8BBE\u7F6E</div>"));
+  }
 
   var replaceHTML =
   /*#__PURE__*/
@@ -14852,47 +14959,57 @@
               return _context3.abrupt("return", data);
 
             case 9:
+              _context3.prev = 9;
+
               if (!pathname.includes('/archive/content/library/')) {
-                _context3.next = 15;
+                _context3.next = 16;
                 break;
               }
 
-              _context3.next = 12;
+              _context3.next = 13;
               return replaceArchive(html);
 
-            case 12:
+            case 13:
               html = _context3.sent;
-              _context3.next = 18;
+              _context3.next = 19;
               break;
 
-            case 15:
-              _context3.next = 17;
+            case 16:
+              _context3.next = 18;
               return replaceHTML(html, pathname);
 
-            case 17:
+            case 18:
               html = _context3.sent;
 
-            case 18:
+            case 19:
+              _context3.next = 24;
+              break;
+
+            case 21:
+              _context3.prev = 21;
+              _context3.t1 = _context3["catch"](9);
+              console.error(_context3.t1);
+
+            case 24:
+              if (pathname.includes('/setting/content/index/index')) {
+                html = insertSettingHtml(html);
+              }
+
               data.data = encodeURIComponent(html);
               return _context3.abrupt("return", data);
 
-            case 20:
+            case 27:
             case "end":
               return _context3.stop();
           }
         }
-      }, _callee3, this, [[2, 6]]);
+      }, _callee3, this, [[2, 6], [9, 21]]);
     }));
     return _transHTML.apply(this, arguments);
   }
 
   var townMap = new Map();
   var loaded$6 = false;
-
-  var trim$3 = function trim(str) {
-    if (!str) return '';
-    return str.trim();
-  };
 
   var getTownData =
   /*#__PURE__*/
@@ -14917,10 +15034,10 @@
               csv = _context.sent;
               list = parseCsv(csv);
               list.forEach(function (item) {
-                var id = trim$3(item.id);
-                var name = trim$3(item.name);
-                var detail = trim$3(item.detail);
-                var vyrn = trim$3(item.vyrn);
+                var id = trim(item.id);
+                var name = filter(trim(item.name));
+                var detail = filter(trim(item.detail));
+                var vyrn = filter(trim(item.vyrn));
 
                 if (id && name) {
                   townMap.set(id, {
@@ -15010,11 +15127,6 @@
   var islandMap = new Map();
   var loaded$7 = false;
 
-  var trim$4 = function trim(str) {
-    if (!str) return '';
-    return str.trim();
-  };
-
   var getIslandData =
   /*#__PURE__*/
   function () {
@@ -15038,9 +15150,9 @@
               csv = _context.sent;
               list = parseCsv(csv);
               list.forEach(function (item) {
-                var id = trim$4(item.id);
-                var name = trim$4(item.name);
-                var detail = trim$4(item.detail);
+                var id = trim(item.id);
+                var name = filter(trim(item.name));
+                var detail = filter(trim(item.detail));
 
                 if (id && name) {
                   islandMap.set(id, {
@@ -15135,11 +15247,6 @@
   var nChatMap = new Map();
   var loaded$8 = false;
 
-  var trim$5 = function trim(str) {
-    if (!str) return '';
-    return str.trim();
-  };
-
   var getChatData =
   /*#__PURE__*/
   function () {
@@ -15177,9 +15284,9 @@
             case 9:
               list = parseCsv(csv);
               list.forEach(function (item) {
-                var id = trim$5(item.id);
-                var text = trim$5(item.text);
-                var trans = trim$5(item.trans);
+                var id = trim(item.id);
+                var text = trim(item.text);
+                var trans = filter(trim(item.trans));
 
                 if (id && trans) {
                   if (/\d+-n/.test(id)) {
@@ -15342,11 +15449,6 @@
   var voiceMap = new Map();
   var loaded$9 = false;
 
-  var trim$6 = function trim(str) {
-    if (!str) return '';
-    return str.trim();
-  };
-
   var getTownData$1 =
   /*#__PURE__*/
   function () {
@@ -15370,9 +15472,9 @@
               csv = _context.sent;
               list = parseCsv(csv);
               list.forEach(function (item) {
-                var path = trim$6(item.path);
-                var trans = trim$6(item.trans);
-                var duration = trim$6(item.duration) || 10;
+                var path = trim(item.path);
+                var trans = filter(trim(item.trans));
+                var duration = trim(item.duration) || 10;
 
                 if (path && trans) {
                   voiceMap.set(path, {
@@ -15619,7 +15721,7 @@
 
   var getLocalName = function getLocalName() {
     var name = localStorage.getItem('blhxfy:name');
-    if (name) config.userName = name;
+    if (name) config.userName = filter(name);
   };
 
   getLocalName();
@@ -15651,7 +15753,7 @@
               }
 
               if (!(apiHosts.indexOf(hostname) !== -1)) {
-                _context.next = 68;
+                _context.next = 74;
                 break;
               }
 
@@ -15666,151 +15768,162 @@
 
             case 11:
               data = _context.sent;
-              _context.next = 66;
+              _context.next = 72;
               break;
 
             case 14:
               if (!pathname.includes('/content/')) {
-                _context.next = 31;
+                _context.next = 37;
                 break;
               }
+
+              _context.prev = 15;
 
               if (pathname.includes('/profile/content/index/')) {
                 getUserName(data);
               }
 
-              _context.next = 18;
+              _context.next = 19;
               return transLangMsg(data, pathname);
 
-            case 18:
-              data = _context.sent;
-              _context.next = 21;
-              return transHTML(data, pathname);
-
-            case 21:
+            case 19:
               data = _context.sent;
 
               if (!pathname.includes('/user/content/index')) {
-                _context.next = 29;
+                _context.next = 27;
                 break;
               }
 
-              _context.next = 25;
+              _context.next = 23;
               return transTownInfo(data, pathname);
 
-            case 25:
+            case 23:
               data = _context.sent;
-              _context.next = 28;
+              _context.next = 26;
               return pageIndex(data, pathname);
 
-            case 28:
+            case 26:
               data = _context.sent;
 
-            case 29:
-              _context.next = 66;
+            case 27:
+              _context.next = 32;
               break;
 
-            case 31:
-              if (!(pathname.includes('/npc/npc/') || pathname.includes('/archive/npc_detail'))) {
-                _context.next = 37;
-                break;
-              }
+            case 29:
+              _context.prev = 29;
+              _context.t0 = _context["catch"](15);
+              console.error(_context.t0);
 
+            case 32:
               _context.next = 34;
-              return parseSkill(data, pathname);
+              return transHTML(data, pathname);
 
             case 34:
               data = _context.sent;
-              _context.next = 66;
+              _context.next = 72;
               break;
 
             case 37:
-              if (!(pathname.includes('/party_ability_subaction/') || pathname.includes('/party/job/') || pathname.includes('/party/ability_list/') || pathname.includes('/zenith/ability_list/') || pathname.includes('/party/job_info/'))) {
+              if (!(pathname.includes('/npc/npc/') || pathname.includes('/archive/npc_detail'))) {
                 _context.next = 43;
                 break;
               }
 
               _context.next = 40;
-              return transSkill$1(data, pathname);
+              return parseSkill(data, pathname);
 
             case 40:
               data = _context.sent;
-              _context.next = 66;
+              _context.next = 72;
               break;
 
             case 43:
-              if (!pathname.includes('/island/init')) {
+              if (!(pathname.includes('/party_ability_subaction/') || pathname.includes('/party/job/') || pathname.includes('/party/ability_list/') || pathname.includes('/zenith/ability_list/') || pathname.includes('/party/job_info/'))) {
                 _context.next = 49;
                 break;
               }
 
               _context.next = 46;
-              return transIslandInfo(data, pathname);
+              return transSkill$1(data, pathname);
 
             case 46:
               data = _context.sent;
-              _context.next = 66;
+              _context.next = 72;
               break;
 
             case 49:
-              if (!pathname.includes('/rest/sound/mypage_voice')) {
-                _context.next = 54;
+              if (!pathname.includes('/island/init')) {
+                _context.next = 55;
                 break;
               }
 
               _context.next = 52;
-              return showVoiceSub(data, pathname, 'list');
+              return transIslandInfo(data, pathname);
 
             case 52:
-              _context.next = 66;
+              data = _context.sent;
+              _context.next = 72;
               break;
 
-            case 54:
-              if (!pathname.includes('/rest/multiraid/start.json')) {
+            case 55:
+              if (!pathname.includes('/rest/sound/mypage_voice')) {
                 _context.next = 60;
                 break;
               }
 
-              _context.next = 57;
-              return transChat(data);
+              _context.next = 58;
+              return showVoiceSub(data, pathname, 'list');
 
-            case 57:
-              data = _context.sent;
-              _context.next = 66;
+            case 58:
+              _context.next = 72;
               break;
 
             case 60:
-              if (!/\/rest\/.*?raid\/condition\/\d+\/\d\/\d\.json/.test(pathname)) {
-                _context.next = 65;
+              if (!pathname.includes('/rest/multiraid/start.json')) {
+                _context.next = 66;
                 break;
               }
 
               _context.next = 63;
-              return transBuff(data.condition);
+              return transChat(data);
 
             case 63:
-              _context.next = 66;
+              data = _context.sent;
+              _context.next = 72;
               break;
-
-            case 65:
-              return _context.abrupt("return");
 
             case 66:
-              _context.next = 69;
-              break;
+              if (!/\/rest\/.*?raid\/condition\/\d+\/\d\/\d\.json/.test(pathname)) {
+                _context.next = 71;
+                break;
+              }
 
-            case 68:
-              return _context.abrupt("return");
+              _context.next = 69;
+              return transBuff(data.condition);
 
             case 69:
+              _context.next = 72;
+              break;
+
+            case 71:
+              return _context.abrupt("return");
+
+            case 72:
+              _context.next = 75;
+              break;
+
+            case 74:
+              return _context.abrupt("return");
+
+            case 75:
               state.result = isJSON ? JSON.stringify(data) : data;
 
-            case 70:
+            case 76:
             case "end":
               return _context.stop();
           }
         }
-      }, _callee, this);
+      }, _callee, this, [[15, 29]]);
     }));
     return _translate.apply(this, arguments);
   }
@@ -16152,12 +16265,396 @@
     }
   }
 
+  var addToolbar = function addToolbar() {
+    if (config.bottomToolbar) {
+      document.addEventListener('DOMContentLoaded', function () {
+        if (!document.querySelector('#treasure-footer')) {
+          document.querySelector('.cnt-global-footer').insertAdjacentHTML('afterend', "\n        <footer id=\"treasure-footer\">\n          <div class=\"cnt-treasure-footer\" style=\"height:40px\">\n            <div class=\"btn-treasure-footer-back\"></div>\n            <div class=\"btn-treasure-footer-reload\"></div>\n            <div class=\"btn-treasure-footer-mypage\" data-href=\"mypage\"></div>\n            <div id=\"prt-treasure-slider\" class=\"prt-treasure-slider\">\n              <ul class=\"lis-treasures\" id=\"treasure-list\" data-treasure-max=\"9\"></ul>\n            </div>\n          </div>\n          <div id=\"treasure-pop\"></div>\n        </footer>\n        ");
+        }
+      });
+    }
+  };
+
+  addToolbar();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.head.insertAdjacentHTML('afterbegin', "\n  <meta name=\"mobile-web-app-capable\" content=\"yes\">\n  <meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n  <link rel=\"apple-touch-startup-image\" href=\"".concat(config.origin, "/blhxfy/data/static/image/splash.png\">\n  "));
+    document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute('content', '碧蓝幻想');
+    document.title = '碧蓝幻想';
+  });
+
+  /**
+   * Gets the timestamp of the number of milliseconds that have elapsed since
+   * the Unix epoch (1 January 1970 00:00:00 UTC).
+   *
+   * @static
+   * @memberOf _
+   * @since 2.4.0
+   * @category Date
+   * @returns {number} Returns the timestamp.
+   * @example
+   *
+   * _.defer(function(stamp) {
+   *   console.log(_.now() - stamp);
+   * }, _.now());
+   * // => Logs the number of milliseconds it took for the deferred invocation.
+   */
+  var now = function() {
+    return _root.Date.now();
+  };
+
+  var now_1 = now;
+
+  /** `Object#toString` result references. */
+  var symbolTag$2 = '[object Symbol]';
+
+  /**
+   * Checks if `value` is classified as a `Symbol` primitive or object.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+   * @example
+   *
+   * _.isSymbol(Symbol.iterator);
+   * // => true
+   *
+   * _.isSymbol('abc');
+   * // => false
+   */
+  function isSymbol$1(value) {
+    return typeof value == 'symbol' ||
+      (isObjectLike_1(value) && _baseGetTag(value) == symbolTag$2);
+  }
+
+  var isSymbol_1 = isSymbol$1;
+
+  /** Used as references for various `Number` constants. */
+  var NAN = 0 / 0;
+
+  /** Used to match leading and trailing whitespace. */
+  var reTrim = /^\s+|\s+$/g;
+
+  /** Used to detect bad signed hexadecimal string values. */
+  var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+
+  /** Used to detect binary string values. */
+  var reIsBinary = /^0b[01]+$/i;
+
+  /** Used to detect octal string values. */
+  var reIsOctal = /^0o[0-7]+$/i;
+
+  /** Built-in method references without a dependency on `root`. */
+  var freeParseInt = parseInt;
+
+  /**
+   * Converts `value` to a number.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to process.
+   * @returns {number} Returns the number.
+   * @example
+   *
+   * _.toNumber(3.2);
+   * // => 3.2
+   *
+   * _.toNumber(Number.MIN_VALUE);
+   * // => 5e-324
+   *
+   * _.toNumber(Infinity);
+   * // => Infinity
+   *
+   * _.toNumber('3.2');
+   * // => 3.2
+   */
+  function toNumber(value) {
+    if (typeof value == 'number') {
+      return value;
+    }
+    if (isSymbol_1(value)) {
+      return NAN;
+    }
+    if (isObject_1(value)) {
+      var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+      value = isObject_1(other) ? (other + '') : other;
+    }
+    if (typeof value != 'string') {
+      return value === 0 ? value : +value;
+    }
+    value = value.replace(reTrim, '');
+    var isBinary = reIsBinary.test(value);
+    return (isBinary || reIsOctal.test(value))
+      ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
+      : (reIsBadHex.test(value) ? NAN : +value);
+  }
+
+  var toNumber_1 = toNumber;
+
+  /** Error message constants. */
+  var FUNC_ERROR_TEXT = 'Expected a function';
+
+  /* Built-in method references for those with the same name as other `lodash` methods. */
+  var nativeMax = Math.max,
+      nativeMin = Math.min;
+
+  /**
+   * Creates a debounced function that delays invoking `func` until after `wait`
+   * milliseconds have elapsed since the last time the debounced function was
+   * invoked. The debounced function comes with a `cancel` method to cancel
+   * delayed `func` invocations and a `flush` method to immediately invoke them.
+   * Provide `options` to indicate whether `func` should be invoked on the
+   * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
+   * with the last arguments provided to the debounced function. Subsequent
+   * calls to the debounced function return the result of the last `func`
+   * invocation.
+   *
+   * **Note:** If `leading` and `trailing` options are `true`, `func` is
+   * invoked on the trailing edge of the timeout only if the debounced function
+   * is invoked more than once during the `wait` timeout.
+   *
+   * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
+   * until to the next tick, similar to `setTimeout` with a timeout of `0`.
+   *
+   * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
+   * for details over the differences between `_.debounce` and `_.throttle`.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Function
+   * @param {Function} func The function to debounce.
+   * @param {number} [wait=0] The number of milliseconds to delay.
+   * @param {Object} [options={}] The options object.
+   * @param {boolean} [options.leading=false]
+   *  Specify invoking on the leading edge of the timeout.
+   * @param {number} [options.maxWait]
+   *  The maximum time `func` is allowed to be delayed before it's invoked.
+   * @param {boolean} [options.trailing=true]
+   *  Specify invoking on the trailing edge of the timeout.
+   * @returns {Function} Returns the new debounced function.
+   * @example
+   *
+   * // Avoid costly calculations while the window size is in flux.
+   * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+   *
+   * // Invoke `sendMail` when clicked, debouncing subsequent calls.
+   * jQuery(element).on('click', _.debounce(sendMail, 300, {
+   *   'leading': true,
+   *   'trailing': false
+   * }));
+   *
+   * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
+   * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
+   * var source = new EventSource('/stream');
+   * jQuery(source).on('message', debounced);
+   *
+   * // Cancel the trailing debounced invocation.
+   * jQuery(window).on('popstate', debounced.cancel);
+   */
+  function debounce(func, wait, options) {
+    var lastArgs,
+        lastThis,
+        maxWait,
+        result,
+        timerId,
+        lastCallTime,
+        lastInvokeTime = 0,
+        leading = false,
+        maxing = false,
+        trailing = true;
+
+    if (typeof func != 'function') {
+      throw new TypeError(FUNC_ERROR_TEXT);
+    }
+    wait = toNumber_1(wait) || 0;
+    if (isObject_1(options)) {
+      leading = !!options.leading;
+      maxing = 'maxWait' in options;
+      maxWait = maxing ? nativeMax(toNumber_1(options.maxWait) || 0, wait) : maxWait;
+      trailing = 'trailing' in options ? !!options.trailing : trailing;
+    }
+
+    function invokeFunc(time) {
+      var args = lastArgs,
+          thisArg = lastThis;
+
+      lastArgs = lastThis = undefined;
+      lastInvokeTime = time;
+      result = func.apply(thisArg, args);
+      return result;
+    }
+
+    function leadingEdge(time) {
+      // Reset any `maxWait` timer.
+      lastInvokeTime = time;
+      // Start the timer for the trailing edge.
+      timerId = setTimeout(timerExpired, wait);
+      // Invoke the leading edge.
+      return leading ? invokeFunc(time) : result;
+    }
+
+    function remainingWait(time) {
+      var timeSinceLastCall = time - lastCallTime,
+          timeSinceLastInvoke = time - lastInvokeTime,
+          timeWaiting = wait - timeSinceLastCall;
+
+      return maxing
+        ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke)
+        : timeWaiting;
+    }
+
+    function shouldInvoke(time) {
+      var timeSinceLastCall = time - lastCallTime,
+          timeSinceLastInvoke = time - lastInvokeTime;
+
+      // Either this is the first call, activity has stopped and we're at the
+      // trailing edge, the system time has gone backwards and we're treating
+      // it as the trailing edge, or we've hit the `maxWait` limit.
+      return (lastCallTime === undefined || (timeSinceLastCall >= wait) ||
+        (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait));
+    }
+
+    function timerExpired() {
+      var time = now_1();
+      if (shouldInvoke(time)) {
+        return trailingEdge(time);
+      }
+      // Restart the timer.
+      timerId = setTimeout(timerExpired, remainingWait(time));
+    }
+
+    function trailingEdge(time) {
+      timerId = undefined;
+
+      // Only invoke if we have `lastArgs` which means `func` has been
+      // debounced at least once.
+      if (trailing && lastArgs) {
+        return invokeFunc(time);
+      }
+      lastArgs = lastThis = undefined;
+      return result;
+    }
+
+    function cancel() {
+      if (timerId !== undefined) {
+        clearTimeout(timerId);
+      }
+      lastInvokeTime = 0;
+      lastArgs = lastCallTime = lastThis = timerId = undefined;
+    }
+
+    function flush() {
+      return timerId === undefined ? result : trailingEdge(now_1());
+    }
+
+    function debounced() {
+      var time = now_1(),
+          isInvoking = shouldInvoke(time);
+
+      lastArgs = arguments;
+      lastThis = this;
+      lastCallTime = time;
+
+      if (isInvoking) {
+        if (timerId === undefined) {
+          return leadingEdge(lastCallTime);
+        }
+        if (maxing) {
+          // Handle invocations in a tight loop.
+          timerId = setTimeout(timerExpired, wait);
+          return invokeFunc(lastCallTime);
+        }
+      }
+      if (timerId === undefined) {
+        timerId = setTimeout(timerExpired, wait);
+      }
+      return result;
+    }
+    debounced.cancel = cancel;
+    debounced.flush = flush;
+    return debounced;
+  }
+
+  var debounce_1 = debounce;
+
+  var saveToLocalstorage = function saveToLocalstorage(key, value) {
+    var data;
+
+    try {
+      var str = localStorage.getItem('blhxfy:setting');
+      data = JSON.parse(str);
+    } catch (err) {
+      console.error(err);
+    }
+
+    if (!isPlainObject_1(data)) {
+      data = {};
+    }
+
+    data[key] = value;
+    localStorage.setItem('blhxfy:setting', JSON.stringify(data));
+  };
+
+  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'userName']]);
+
+  var setting = function setting(type, value) {
+    if (type === 'show') {
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = keyMap[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var _step$value = _slicedToArray(_step.value, 2),
+              id = _step$value[0],
+              key = _step$value[1];
+
+          var ipt = $("#".concat(id, "-setting-blhxfy"));
+
+          if (ipt.attr('type') === 'checkbox') {
+            ipt[0].checked = config[key];
+          } else {
+            ipt.val(config[key]);
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return != null) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      $('#blhxfy-setting-modal').addClass('show');
+    } else if (type === 'origin' || type === 'auto-download' || type === 'bottom-toolbar') {
+      saveToLocalstorage(keyMap.get(type), value);
+    } else if (type === 'username') {
+      localStorage.setItem('blhxfy:name', value);
+    }
+  };
+
+  var dbSetting = debounce_1(setting, 500);
+
   var main = function main() {
     if (window.blhxfy) return;
     injectXHR();
     window.blhxfy = {
       dlStoryCsv: dlStoryCsv,
-      previewCsv: previewCsv
+      previewCsv: previewCsv,
+      setting: dbSetting
     };
   };
 
