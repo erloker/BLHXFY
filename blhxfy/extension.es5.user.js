@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.3
+// @version      1.1.4
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8296,11 +8296,22 @@
 
   var isPlainObject_1 = isPlainObject;
 
+  var whiteList = ['需要<%= quest_ap - sp %><%= point_name %>来开始。', '使用道具恢复<%= point_name %>？', "\u6765\u81EA<span class='txt-request-name'><%= n.attributes.called_user_name %></span>\u7684\u6551\u63F4\u8BF7\u6C42", "\u6765\u81EA<span class='txt-request-name'><%= raid['called_user_name'] %></span>\u7684\u6551\u63F4\u8BF7\u6C42", '还剩<%= can_quest_start_count %>回挑战（一共<%= max_quest_start_count %>回）', '<%= set_user.name %> Rank <%= set_user.rank %> 选择任务', '<%= title %>'];
+
+  var filter = function filter(str) {
+    if (!whiteList.includes(str)) {
+      return purify.sanitize(str);
+    }
+
+    return str;
+  };
+
   var config = {
     origin: 'https://blhx.danmu9.com',
     apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
     hash: '',
     userName: '',
+    displayName: '',
     timeout: 8,
     autoDownload: false,
     bottomToolbar: false
@@ -8317,10 +8328,10 @@
       config.origin = origin.trim();
     }
 
-    var keys = ['autoDownload', 'bottomToolbar'];
+    var keys = ['autoDownload', 'bottomToolbar', 'displayName'];
     keys.forEach(function (key) {
       var value = setting[key];
-      if (isString_1(value)) value = value.trim();
+      if (isString_1(value)) value = filter(value.trim());
 
       if (value) {
         config[key] = value;
@@ -10320,16 +10331,6 @@
         return 0;
       }
     });
-  };
-
-  var whiteList = ['需要<%= quest_ap - sp %><%= point_name %>来开始。', '使用道具恢复<%= point_name %>？', "\u6765\u81EA<span class='txt-request-name'><%= n.attributes.called_user_name %></span>\u7684\u6551\u63F4\u8BF7\u6C42", "\u6765\u81EA<span class='txt-request-name'><%= raid['called_user_name'] %></span>\u7684\u6551\u63F4\u8BF7\u6C42", '还剩<%= can_quest_start_count %>回挑战（一共<%= max_quest_start_count %>回）', '<%= set_user.name %> Rank <%= set_user.rank %> 选择任务', '<%= title %>'];
-
-  var filter = function filter(str) {
-    if (!whiteList.includes(str)) {
-      return purify.sanitize(str);
-    }
-
-    return str;
   };
 
   var enNameMap = new Map();
@@ -12811,7 +12812,7 @@
                   var id = idArr[0];
                   var type = idArr[1] || 'detail';
                   var obj = transMap.get(id) || {};
-                  obj[type] = item.trans ? filter(item.trans.replace(/姬塔/g, config.userName)) : false;
+                  obj[type] = item.trans ? filter(item.trans.replace(/姬塔/g, config.displayName || config.userName)) : false;
                   transMap.set(id, obj);
                 }
               });
@@ -16608,7 +16609,7 @@
     localStorage.setItem('blhxfy:setting', JSON.stringify(data));
   };
 
-  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'userName']]);
+  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName']]);
 
   var setting = function setting(type, value) {
     if (type === 'show') {
@@ -16646,10 +16647,8 @@
       }
 
       $('#blhxfy-setting-modal').addClass('show');
-    } else if (type === 'origin' || type === 'auto-download' || type === 'bottom-toolbar') {
+    } else if (type === 'origin' || type === 'auto-download' || type === 'bottom-toolbar' || type === 'username') {
       saveToLocalstorage(keyMap.get(type), value);
-    } else if (type === 'username') {
-      localStorage.setItem('blhxfy:name', value);
     }
   };
 
