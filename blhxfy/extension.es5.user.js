@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.1
+// @version      1.1.2
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -12978,7 +12978,7 @@
             case 3:
               sNameTemp = pathRst[1];
 
-              if (!pathRst[1].includes('birthday')) {
+              if (!(pathRst[1].includes('birthday') || pathname.includes('season_event'))) {
                 _context2.next = 9;
                 break;
               }

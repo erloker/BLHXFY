@@ -10242,7 +10242,7 @@
 	  if (!pathRst || !pathRst[1]) return data;
 	  let sNameTemp = pathRst[1];
 
-	  if (pathRst[1].includes('birthday')) {
+	  if (pathRst[1].includes('birthday') || pathname.includes('season_event')) {
 	    let rst = pathname.match(/\/[^/]*?scenario.*?\/(scene.+)$/);
 	    if (!rst || !rst[1]) return data;
 	    sNameTemp = rst[1].replace(/\//g, '_');
