@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.2
+// @version      1.1.3
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -12951,7 +12951,8 @@
     data: null,
     name: '',
     hasTrans: false,
-    csv: ''
+    csv: '',
+    nameMap: null
   };
 
   var transStart =
@@ -13009,23 +13010,24 @@
               _ref3 = _context2.sent;
               transMap = _ref3.transMap;
               csv = _ref3.csv;
+              _context2.next = 22;
+              return getNameData();
+
+            case 22:
+              nameData = _context2.sent;
+              nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
+              scenarioCache.nameMap = nameMap;
 
               if (transMap) {
-                _context2.next = 22;
+                _context2.next = 27;
                 break;
               }
 
               return _context2.abrupt("return", data);
 
-            case 22:
+            case 27:
               scenarioCache.hasTrans = true;
               scenarioCache.csv = csv;
-              _context2.next = 26;
-              return getNameData();
-
-            case 26:
-              nameData = _context2.sent;
-              nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
               data.forEach(function (item) {
                 var name1, name2, name3;
                 name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -13041,7 +13043,7 @@
               });
               return _context2.abrupt("return", data);
 
-            case 30:
+            case 31:
             case "end":
               return _context2.stop();
           }
@@ -16148,9 +16150,9 @@
     if (userName) {
       content.forEach(function (item) {
         if (item.id === 'info') return;
-        ['en', 'jp', 'trans'].forEach(function (key) {
+        ['name', 'text', 'trans'].forEach(function (key) {
           if (!item[key]) return;
-          var _lang = key;
+          var _lang = Game.lang;
           if (!/^\w+$/.test(userName)) _lang = 'unknown';
           item[key] = replaceWords(item[key], new Map([[userName, '姬塔']]), _lang);
         });
@@ -16161,15 +16163,20 @@
   var dataToCsv = function dataToCsv(data, fill) {
     var result = [];
     data.forEach(function (item) {
+      var name = item.charcter1_name;
+      replaceChar('charcter1_name', item, scenarioCache.nameMap, scenarioCache.name);
+      var transName = item.charcter1_name;
+      var hasTransName = name !== transName;
       txtKeys$1.forEach(function (key) {
         var txt = item[key];
+        var hasName = key === 'detail' && name && name !== 'null';
 
         if (txt) {
           txt = txt.replace(/\n/g, '');
           result.push({
             id: "".concat(item.id).concat(key === 'detail' ? '' : '-' + key),
-            en: Game.lang === 'en' ? txt : '',
-            jp: Game.lang === 'ja' ? txt : '',
+            name: hasName ? "".concat(name).concat(hasTransName ? '/' + transName : '') : '',
+            text: txt,
             trans: fill ? txt : ''
           });
         }
@@ -16177,8 +16184,8 @@
     });
     var extraInfo = {
       id: 'info',
-      en: Game.lang === 'en' ? '1' : '',
-      jp: Game.lang === 'ja' ? '1' : '',
+      name: '',
+      text: '',
       trans: scenarioCache.name
     };
     replaceName(result, config.userName);

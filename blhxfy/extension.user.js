@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.2
+// @version      1.1.3
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -10248,7 +10248,8 @@
 	  data: null,
 	  name: '',
 	  hasTrans: false,
-	  csv: ''
+	  csv: '',
+	  nameMap: null
 	};
 
 	const transStart = async (data, pathname) => {
@@ -10272,11 +10273,12 @@
 	    transMap,
 	    csv
 	  } = await getScenario(scenarioName);
+	  const nameData = await getNameData();
+	  const nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
+	  scenarioCache.nameMap = nameMap;
 	  if (!transMap) return data;
 	  scenarioCache.hasTrans = true;
 	  scenarioCache.csv = csv;
-	  const nameData = await getNameData();
-	  const nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
 	  data.forEach(item => {
 	    let name1, name2, name3;
 	    name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -11726,9 +11728,9 @@
 	  if (userName) {
 	    content.forEach(item => {
 	      if (item.id === 'info') return;
-	      ['en', 'jp', 'trans'].forEach(key => {
+	      ['name', 'text', 'trans'].forEach(key => {
 	        if (!item[key]) return;
-	        let _lang = key;
+	        let _lang = Game.lang;
 	        if (!/^\w+$/.test(userName)) _lang = 'unknown';
 	        item[key] = replaceWords(item[key], new Map([[userName, '姬塔']]), _lang);
 	      });
@@ -11739,15 +11741,20 @@
 	const dataToCsv = (data, fill) => {
 	  const result = [];
 	  data.forEach(item => {
+	    const name = item.charcter1_name;
+	    replaceChar('charcter1_name', item, scenarioCache.nameMap, scenarioCache.name);
+	    const transName = item.charcter1_name;
+	    const hasTransName = name !== transName;
 	    txtKeys$1.forEach(key => {
 	      let txt = item[key];
+	      let hasName = key === 'detail' && name && name !== 'null';
 
 	      if (txt) {
 	        txt = txt.replace(/\n/g, '');
 	        result.push({
 	          id: `${item.id}${key === 'detail' ? '' : '-' + key}`,
-	          en: Game.lang === 'en' ? txt : '',
-	          jp: Game.lang === 'ja' ? txt : '',
+	          name: hasName ? `${name}${hasTransName ? '/' + transName : ''}` : '',
+	          text: txt,
 	          trans: fill ? txt : ''
 	        });
 	      }
@@ -11755,8 +11762,8 @@
 	  });
 	  const extraInfo = {
 	    id: 'info',
-	    en: Game.lang === 'en' ? '1' : '',
-	    jp: Game.lang === 'ja' ? '1' : '',
+	    name: '',
+	    text: '',
 	    trans: scenarioCache.name
 	  };
 	  replaceName(result, config.userName);
