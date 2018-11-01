@@ -36,7 +36,7 @@ id,en,jp,trans
 32,It's just... I don't want to see any more deaths.,だけど俺……<br>もう誰も死なせたくねーんだ。,但是我不想再看到任何人死了。
 33,Cain speaks as if the words are spilling from his very heart.,<span class='scene-font-katari'>ぽつりと、</span><br><span class='scene-font-katari'>まるで唯一の本音を漏らすように、</span><br><span class='scene-font-katari'>カインは告げる。</span>,<span class='scene-font-katari'>该隐像是透露出自己唯一的心声一般嘟囔一声。</span>
 34,In truth Nalhegrande is turning to shambles now.,いま、ナル・グランデは、<br>確かに荒れ放題だ。,现在纳尔格兰德确实在日渐混乱。
-35,But it's not only Idelva and Rhem you have to worry about. Istavion in Oarlyegrande will get involved in this as well.,イデルバにレムだけじゃない。<br>アウライ・グランデの<br>イスタバイオンまで絡んできてやがる。,不仅是伊迪尔瓦和雷姆，奥莱格兰德大空域的伊斯塔拜恩也纠缠了进来。
+35,But it's not only Idelva and Rhem you have to worry about. Istavion in Oarlyegrande will get involved in this as well.,イデルバにレムだけじゃない。<br>アウライ・グランデの<br>イスタバイオンまで絡んできてやがる。,不仅是伊迪尔瓦和雷姆，奥莱・格兰德空域的伊斯塔拜恩也纠缠了进来。
 36,Perhaps new countries are being built as we speak.,いま、こうしてる間にも、<br>新しい国が<br>生まれようとしてるのかもしれねぇ。,也许就在我们谈话期间都有新国家诞生也说不定。
 37,But to build a country in Nalhegrande right now...,けど……<br>いま、このナル・グランデで<br>国を建てるってことは……,但是现在要在纳尔格兰德建立国家...
 38,"It's the same as declaring war on the world, and you know it.",お前もわかってる通り、<br>世界と戦う、ってことなんだ。,正如你所知的，就是在和全世界为敌。
@@ -62,3 +62,4 @@ id,en,jp,trans
 56,Are you not? In that case you should really quit this country-building scheme and whatnot.,楽しくねーの？　お前。<br>それならホント、やめた方がいいぜ、<br>国作りとかさ。,你不高兴吗？那样的话建立国家这样的事还是别干了吧。
 57,I can't quit now... I've made up my mind. So don't you dare think you can escape!,やめられるかよ……<br>オレはもう決めたんだ。<br>だから……逃げられると思うなよ！,不会放弃的，我已经决定了，所以你们也别想从这逃出去。
 info,1,1,scene_cp81_q4_s10
+,,,
