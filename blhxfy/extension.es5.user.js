@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.4
+// @version      1.1.5
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -6920,6 +6920,20 @@
 
   _setSpecies('RegExp');
 
+  var STARTS_WITH = 'startsWith';
+  var $startsWith = ''[STARTS_WITH];
+
+  _export(_export.P + _export.F * _failsIsRegexp(STARTS_WITH), 'String', {
+    startsWith: function startsWith(searchString /* , position = 0 */) {
+      var that = _stringContext(this, searchString, STARTS_WITH);
+      var index = _toLength(Math.min(arguments.length > 1 ? arguments[1] : undefined, that.length));
+      var search = String(searchString);
+      return $startsWith
+        ? $startsWith.call(that, search, index)
+        : that.slice(index, index + search.length) === search;
+    }
+  });
+
   var html = ['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr'];
 
   // SVG
@@ -7916,6 +7930,14 @@
     document.body.appendChild(eleLink);
     eleLink.click();
     document.body.removeChild(eleLink);
+  };
+
+  var removeTag = function removeTag(html) {
+    if (html.startsWith('<')) {
+      return html.replace(/^<[^>]+>([^<]*)<\/[^>]+>/, '$1');
+    }
+
+    return html;
   };
 
   var replaceWords = function replaceWords(str, map) {
@@ -16164,9 +16186,9 @@
   var dataToCsv = function dataToCsv(data, fill) {
     var result = [];
     data.forEach(function (item) {
-      var name = item.charcter1_name;
+      var name = removeTag(item.charcter1_name);
       replaceChar('charcter1_name', item, scenarioCache.nameMap, scenarioCache.name);
-      var transName = item.charcter1_name;
+      var transName = removeTag(item.charcter1_name);
       var hasTransName = name !== transName;
       txtKeys$1.forEach(function (key) {
         var txt = item[key];

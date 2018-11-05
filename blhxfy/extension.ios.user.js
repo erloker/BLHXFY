@@ -5295,7 +5295,7 @@
 	  return str.trim();
 	};
 
-	var tryDownload = function (content, filename) {
+	const tryDownload = (content, filename) => {
 	  const eleLink = document.createElement('a');
 	  eleLink.download = filename;
 	  eleLink.style.display = 'none';
@@ -5306,6 +5306,14 @@
 	  document.body.appendChild(eleLink);
 	  eleLink.click();
 	  document.body.removeChild(eleLink);
+	};
+
+	const removeTag = html => {
+	  if (html.startsWith('<')) {
+	    return html.replace(/^<[^>]+>([^<]*)<\/[^>]+>/, '$1');
+	  }
+
+	  return html;
 	};
 
 	const replaceWords = (str, map, lang = 'en') => {
@@ -11728,9 +11736,9 @@
 	const dataToCsv = (data, fill) => {
 	  const result = [];
 	  data.forEach(item => {
-	    const name = item.charcter1_name;
+	    const name = removeTag(item.charcter1_name);
 	    replaceChar('charcter1_name', item, scenarioCache.nameMap, scenarioCache.name);
-	    const transName = item.charcter1_name;
+	    const transName = removeTag(item.charcter1_name);
 	    const hasTransName = name !== transName;
 	    txtKeys$1.forEach(key => {
 	      let txt = item[key];
