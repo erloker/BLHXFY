@@ -5571,6 +5571,33 @@
 
 	var isString_1 = isString;
 
+	/** `Object#toString` result references. */
+	var boolTag = '[object Boolean]';
+
+	/**
+	 * Checks if `value` is classified as a boolean primitive or object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a boolean, else `false`.
+	 * @example
+	 *
+	 * _.isBoolean(false);
+	 * // => true
+	 *
+	 * _.isBoolean(null);
+	 * // => false
+	 */
+	function isBoolean(value) {
+	  return value === true || value === false ||
+	    (isObjectLike_1(value) && _baseGetTag(value) == boolTag);
+	}
+
+	var isBoolean_1 = isBoolean;
+
 	/**
 	 * Creates a unary function that invokes `func` with its argument transformed.
 	 *
@@ -5669,7 +5696,8 @@
 	  displayName: '',
 	  timeout: 8,
 	  autoDownload: false,
-	  bottomToolbar: false
+	  bottomToolbar: false,
+	  removeScroller: true
 	};
 
 	const getLocalConfig = () => {
@@ -5684,12 +5712,12 @@
 	    config.origin = origin.trim();
 	  }
 
-	  const keys = ['autoDownload', 'bottomToolbar', 'displayName'];
+	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller'];
 	  keys.forEach(key => {
 	    let value = setting[key];
 	    if (isString_1(value)) value = filter(value.trim());
 
-	    if (value) {
+	    if (isBoolean_1(value) || value) {
 	      config[key] = value;
 	    }
 	  });
@@ -7769,8 +7797,8 @@
 <div id="blhxfy-story-tool">
   <button onclick="window.blhxfy.dlStoryCsv()" title="下载未翻译的剧情文本">原文</button>
   <button onclick="window.blhxfy.dlStoryCsv('fill')" title="下载用原文填充trans列的剧情文本">填充</button>
-  <button onclick="window.blhxfy.dlStoryCsv('trans')" title="下载带翻译的剧情文本">译文</button>
-  <button onclick="window.blhxfy.previewCsv('show')" title="填写已翻译的剧情文本来预览">预览</button>
+  <button onclick="window.blhxfy.dlStoryCsv('trans')" title="下载已翻译的剧情文本">译文</button>
+  <button onclick="window.blhxfy.previewCsv('show')" title="填写翻译好的剧情文本来预览">预览</button>
 </div>
 <div id="blhxfy-story-input">
   <div class="blhxfy-preview-tool">
@@ -8908,7 +8936,7 @@
 	/** `Object#toString` result references. */
 	var argsTag$1 = '[object Arguments]',
 	    arrayTag = '[object Array]',
-	    boolTag = '[object Boolean]',
+	    boolTag$1 = '[object Boolean]',
 	    dateTag = '[object Date]',
 	    errorTag = '[object Error]',
 	    funcTag$1 = '[object Function]',
@@ -8940,7 +8968,7 @@
 	typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
 	typedArrayTags[uint32Tag] = true;
 	typedArrayTags[argsTag$1] = typedArrayTags[arrayTag] =
-	typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+	typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag$1] =
 	typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
 	typedArrayTags[errorTag] = typedArrayTags[funcTag$1] =
 	typedArrayTags[mapTag] = typedArrayTags[numberTag] =
@@ -9736,7 +9764,7 @@
 	var _cloneTypedArray = cloneTypedArray;
 
 	/** `Object#toString` result references. */
-	var boolTag$1 = '[object Boolean]',
+	var boolTag$2 = '[object Boolean]',
 	    dateTag$1 = '[object Date]',
 	    mapTag$2 = '[object Map]',
 	    numberTag$1 = '[object Number]',
@@ -9775,7 +9803,7 @@
 	    case arrayBufferTag$1:
 	      return _cloneArrayBuffer(object);
 
-	    case boolTag$1:
+	    case boolTag$2:
 	    case dateTag$1:
 	      return new Ctor(+object);
 
@@ -9939,7 +9967,7 @@
 	/** `Object#toString` result references. */
 	var argsTag$2 = '[object Arguments]',
 	    arrayTag$1 = '[object Array]',
-	    boolTag$2 = '[object Boolean]',
+	    boolTag$3 = '[object Boolean]',
 	    dateTag$2 = '[object Date]',
 	    errorTag$1 = '[object Error]',
 	    funcTag$2 = '[object Function]',
@@ -9969,7 +9997,7 @@
 	var cloneableTags = {};
 	cloneableTags[argsTag$2] = cloneableTags[arrayTag$1] =
 	cloneableTags[arrayBufferTag$2] = cloneableTags[dataViewTag$3] =
-	cloneableTags[boolTag$2] = cloneableTags[dateTag$2] =
+	cloneableTags[boolTag$3] = cloneableTags[dateTag$2] =
 	cloneableTags[float32Tag$2] = cloneableTags[float64Tag$2] =
 	cloneableTags[int8Tag$2] = cloneableTags[int16Tag$2] =
 	cloneableTags[int32Tag$2] = cloneableTags[mapTag$4] =
@@ -10110,6 +10138,25 @@
 	var cloneDeep_1 = cloneDeep;
 
 	const txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+	const scenarioCache = {
+	  data: null,
+	  name: '',
+	  originName: '',
+	  hasTrans: false,
+	  csv: '',
+	  nameMap: null,
+	  transMap: null
+	};
+
+	const getFilename = pathname => {
+	  const rgs = pathname.match(/([^\/\\]+)$/);
+
+	  if (rgs && rgs[1]) {
+	    return rgs[1];
+	  }
+
+	  return pathname;
+	};
 
 	const getScenario = async name => {
 	  let csv = getPreviewCsv(name);
@@ -10125,6 +10172,7 @@
 	      };
 	    }
 
+	    scenarioCache.originName = getFilename(pathname);
 	    csv = await fetchWithHash(`/blhxfy/data/scenario/${pathname}`);
 	  }
 
@@ -10137,6 +10185,7 @@
 	      const type = idArr[1] || 'detail';
 	      const obj = transMap.get(id) || {};
 	      obj[type] = item.trans ? filter(item.trans.replace(/姬塔/g, config.displayName || config.userName)) : false;
+	      obj[`${type}-origin`] = item.trans;
 	      transMap.set(id, obj);
 	    }
 	  });
@@ -10239,14 +10288,6 @@
 	  }
 	};
 
-	const scenarioCache = {
-	  data: null,
-	  name: '',
-	  hasTrans: false,
-	  csv: '',
-	  nameMap: null
-	};
-
 	const transStart = async (data, pathname) => {
 	  const pathRst = pathname.match(/\/[^/]*?scenario.*?\/(scene[^\/]+)\/?/);
 	  if (!pathRst || !pathRst[1]) return data;
@@ -10264,6 +10305,7 @@
 	  scenarioCache.data = cloneDeep_1(data);
 	  scenarioCache.name = scenarioName;
 	  scenarioCache.hasTrans = false;
+	  scenarioCache.originName = '';
 	  const {
 	    transMap,
 	    csv
@@ -10274,6 +10316,7 @@
 	  if (!transMap) return data;
 	  scenarioCache.hasTrans = true;
 	  scenarioCache.csv = csv;
+	  scenarioCache.transMap = transMap;
 	  data.forEach(item => {
 	    let name1, name2, name3;
 	    name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -11009,6 +11052,16 @@
       </div>
 
 			<div class="prt-setting-article">
+				<div class="txt-article-title">隐藏网页滚动条</div>
+				<div class="prt-button-l">
+					<div>
+						<input id="remove-scroller-setting-blhxfy" onchange="window.blhxfy.setting('remove-scroller', this.checked)" type="checkbox" value="">
+						<label for="remove-scroller-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">隐藏滚动条</label>
+					</div>
+				</div>
+			</div>
+
+			<div class="prt-setting-article">
 				<div class="txt-article-title">显示底部工具栏</div>
 				<ul class="txt-article-lead">
 					<li>在手机浏览器上也显示底部工具栏</li>
@@ -11733,7 +11786,7 @@
 	  }
 	};
 
-	const dataToCsv = (data, fill) => {
+	const dataToCsv = (data, fill, isTrans) => {
 	  const result = [];
 	  data.forEach(item => {
 	    const name = removeTag(item.charcter1_name);
@@ -11746,11 +11799,23 @@
 
 	      if (txt) {
 	        txt = txt.replace(/\n/g, '');
+	        let trans = '';
+
+	        if (isTrans) {
+	          const obj = scenarioCache.transMap.get(item.id);
+
+	          if (obj && obj[`${key}-origin`]) {
+	            trans = obj[`${key}-origin`];
+	          }
+	        } else if (fill) {
+	          trans = txt;
+	        }
+
 	        result.push({
 	          id: `${item.id}${key === 'detail' ? '' : '-' + key}`,
 	          name: hasName ? `${name}${hasTransName ? '/' + transName : ''}` : '',
 	          text: txt,
-	          trans: fill ? txt : ''
+	          trans
 	        });
 	      }
 	    });
@@ -11771,7 +11836,7 @@
 	    tryDownload(dataToCsv(scenarioCache.data), scenarioCache.name + '.csv');
 	  } else if (type === 'trans') {
 	    if (scenarioCache.hasTrans) {
-	      tryDownload(scenarioCache.csv, scenarioCache.name + '.csv');
+	      tryDownload(dataToCsv(scenarioCache.data, false, true), scenarioCache.originName);
 	    } else {
 	      alert('这个章节还没有翻译。');
 	    }
@@ -11793,7 +11858,7 @@
 	  }
 
 	  if (!exist) {
-	    if (data.length >= 3) {
+	    if (data.length >= 5) {
 	      data.shift();
 	    }
 
@@ -11856,6 +11921,20 @@
 	  document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute('content', '碧蓝幻想');
 	  document.title = '碧蓝幻想';
 	});
+
+	const removeScroller = () => {
+	  if (config.removeScroller) {
+	    const style = document.createElement('style');
+	    style.innerHTML = `
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    `;
+	    document.head.appendChild(style);
+	  }
+	};
+
+	removeScroller();
 
 	/**
 	 * Gets the timestamp of the number of milliseconds that have elapsed since
@@ -12175,7 +12254,7 @@
 	  localStorage.setItem('blhxfy:setting', JSON.stringify(data));
 	};
 
-	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName']]);
+	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller']]);
 
 	const setting = (type, value) => {
 	  if (type === 'show') {
@@ -12190,7 +12269,7 @@
 	    }
 
 	    $('#blhxfy-setting-modal').addClass('show');
-	  } else if (type === 'origin' || type === 'auto-download' || type === 'bottom-toolbar' || type === 'username') {
+	  } else {
 	    saveToLocalstorage(keyMap.get(type), value);
 	  }
 	};

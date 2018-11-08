@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.5
+// @version      1.1.6
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5369,38 +5369,6 @@
 
   _export(_export.S + _export.F, 'Object', { assign: _objectAssign });
 
-  var _fixReWks = function (KEY, length, exec) {
-    var SYMBOL = _wks(KEY);
-    var fns = exec(_defined, SYMBOL, ''[KEY]);
-    var strfn = fns[0];
-    var rxfn = fns[1];
-    if (_fails(function () {
-      var O = {};
-      O[SYMBOL] = function () { return 7; };
-      return ''[KEY](O) != 7;
-    })) {
-      _redefine(String.prototype, KEY, strfn);
-      _hide(RegExp.prototype, SYMBOL, length == 2
-        // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
-        // 21.2.5.11 RegExp.prototype[@@split](string, limit)
-        ? function (string, arg) { return rxfn.call(string, this, arg); }
-        // 21.2.5.6 RegExp.prototype[@@match](string)
-        // 21.2.5.9 RegExp.prototype[@@search](string)
-        : function (string) { return rxfn.call(string, this); }
-      );
-    }
-  };
-
-  // @@match logic
-  _fixReWks('match', 1, function (defined, MATCH, $match) {
-    // 21.1.3.11 String.prototype.match(regexp)
-    return [function match(regexp) {
-      var O = defined(this);
-      var fn = regexp == undefined ? undefined : regexp[MATCH];
-      return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
-    }, $match];
-  });
-
   var f$4 = _wks;
 
   var _wksExt = {
@@ -5701,6 +5669,28 @@
   // 24.3.3 JSON[@@toStringTag]
   _setToStringTag(_global.JSON, 'JSON', true);
 
+  var _fixReWks = function (KEY, length, exec) {
+    var SYMBOL = _wks(KEY);
+    var fns = exec(_defined, SYMBOL, ''[KEY]);
+    var strfn = fns[0];
+    var rxfn = fns[1];
+    if (_fails(function () {
+      var O = {};
+      O[SYMBOL] = function () { return 7; };
+      return ''[KEY](O) != 7;
+    })) {
+      _redefine(String.prototype, KEY, strfn);
+      _hide(RegExp.prototype, SYMBOL, length == 2
+        // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
+        // 21.2.5.11 RegExp.prototype[@@split](string, limit)
+        ? function (string, arg) { return rxfn.call(string, this, arg); }
+        // 21.2.5.6 RegExp.prototype[@@match](string)
+        // 21.2.5.9 RegExp.prototype[@@search](string)
+        : function (string) { return rxfn.call(string, this); }
+      );
+    }
+  };
+
   // @@replace logic
   _fixReWks('replace', 2, function (defined, REPLACE, $replace) {
     // 21.1.3.14 String.prototype.replace(searchValue, replaceValue)
@@ -5954,6 +5944,16 @@
       return _collectionStrong.def(_validateCollection(this, MAP), key === 0 ? 0 : key, value);
     }
   }, _collectionStrong, true);
+
+  // @@match logic
+  _fixReWks('match', 1, function (defined, MATCH, $match) {
+    // 21.1.3.11 String.prototype.match(regexp)
+    return [function match(regexp) {
+      var O = defined(this);
+      var fn = regexp == undefined ? undefined : regexp[MATCH];
+      return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
+    }, $match];
+  });
 
   // 7.3.20 SpeciesConstructor(O, defaultConstructor)
 
@@ -8238,6 +8238,33 @@
 
   var isString_1 = isString;
 
+  /** `Object#toString` result references. */
+  var boolTag = '[object Boolean]';
+
+  /**
+   * Checks if `value` is classified as a boolean primitive or object.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a boolean, else `false`.
+   * @example
+   *
+   * _.isBoolean(false);
+   * // => true
+   *
+   * _.isBoolean(null);
+   * // => false
+   */
+  function isBoolean(value) {
+    return value === true || value === false ||
+      (isObjectLike_1(value) && _baseGetTag(value) == boolTag);
+  }
+
+  var isBoolean_1 = isBoolean;
+
   /**
    * Creates a unary function that invokes `func` with its argument transformed.
    *
@@ -8336,7 +8363,8 @@
     displayName: '',
     timeout: 8,
     autoDownload: false,
-    bottomToolbar: false
+    bottomToolbar: false,
+    removeScroller: true
   };
 
   var getLocalConfig = function getLocalConfig() {
@@ -8350,12 +8378,12 @@
       config.origin = origin.trim();
     }
 
-    var keys = ['autoDownload', 'bottomToolbar', 'displayName'];
+    var keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller'];
     keys.forEach(function (key) {
       var value = setting[key];
       if (isString_1(value)) value = filter(value.trim());
 
-      if (value) {
+      if (isBoolean_1(value) || value) {
         config[key] = value;
       }
     });
@@ -10452,7 +10480,7 @@
     };
   }();
 
-  var html$2 = "\n<style>\n#blhxfy-story-tool {\n  display: none;\n}\n#blhxfy-story-input button,\n#blhxfy-story-tool button {\n  border: none;\n  background: none;\n  cursor: pointer;\n  padding: 4px 6px;\n  font-size: 10px;\n  margin: 0;\n  letter-spacing: 1px;\n  line-height: 1;\n  outline: none;\n  position: relative;\n  transition: none;\n  border-radius: 3px;\n  background: #539cba;\n  color: #fff;\n  box-shadow: 0 3px #165c85;\n  text-shadow: 1px 1px 2px rgba(0,0,0,0.5)\n}\n\n#blhxfy-story-input button:hover,\n#blhxfy-story-tool button:hover {\n  box-shadow: 0 2px #165c85;\n  top: 1px;\n}\n#blhxfy-story-input button:active,\n#blhxfy-story-tool button:active {\n  box-shadow: 0 1px #165c85;\n  top: 2px;\n}\n.log #blhxfy-story-tool {\n  display: block;\n  position: absolute;\n  top: 33px;\n  left: 0;\n  width: 100%;\n  z-index: 9999;\n  text-align: center;\n}\n#blhxfy-story-input {\n  position: absolute;\n  display: none;\n  top: 0;\n  left: 0;\n  width: 320px;\n  height: 100%;\n  background: #fff;\n  z-index: 10000;\n}\n.blhxfy-preview-tool {\n  padding-top: 10px;\n  padding-bottom: 10px;\n  border-bottom: 1px solid #e3e3e3;\n  display: flex;\n  justify-content: space-between;\n  padding-left: 10px;\n  padding-right: 10px;\n  background: #116d82;\n}\n#blhxfy-story-input p {\n  margin: 10px 10px 0 10px;\n  color: #5b8690;\n  text-align: left;\n  font-size: 10px;\n  position: relative;\n}\n#blhxfy-story-input p a {\n  color: #29b82d;\n  position: absolute;\n  cursor: pointer;\n  padding: 4px;\n  right: 0;\n  top: -5px;\n}\n#blhxfy-story-input textarea {\n  width: 300px;\n  height: calc(100% - 80px);\n  margin: 10px;\n  box-sizing: border-box;\n  font-size: 8px;\n  padding: 4px;\n  border-radius: 2px;\n  box-shadow: inset 0 0 3px #2c88d775;\n  outline: none;\n  resize: none;\n  font-family: Consolas, \"Microsoft Yahei\";\n}\n</style>\n<div id=\"blhxfy-story-tool\">\n  <button onclick=\"window.blhxfy.dlStoryCsv()\" title=\"\u4E0B\u8F7D\u672A\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\">\u539F\u6587</button>\n  <button onclick=\"window.blhxfy.dlStoryCsv('fill')\" title=\"\u4E0B\u8F7D\u7528\u539F\u6587\u586B\u5145trans\u5217\u7684\u5267\u60C5\u6587\u672C\">\u586B\u5145</button>\n  <button onclick=\"window.blhxfy.dlStoryCsv('trans')\" title=\"\u4E0B\u8F7D\u5E26\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\">\u8BD1\u6587</button>\n  <button onclick=\"window.blhxfy.previewCsv('show')\" title=\"\u586B\u5199\u5DF2\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\u6765\u9884\u89C8\">\u9884\u89C8</button>\n</div>\n<div id=\"blhxfy-story-input\">\n  <div class=\"blhxfy-preview-tool\">\n    <button onclick=\"window.blhxfy.previewCsv('hide')\">\u53D6\u6D88</button>\n    <button onclick=\"window.blhxfy.previewCsv('save')\" title=\"\u4FDD\u5B58\u9884\u89C8\u6587\u672C\u5E76\u5237\u65B0\u9875\u9762\">\u4FDD\u5B58</button>\n  </div>\n  <p>\u8BF7\u5C06\u7F16\u8F91\u597D\u7684\u5267\u60C5\u6587\u672C\u7C98\u8D34\u5230\u6587\u672C\u6846<a onclick=\"window.blhxfy.previewCsv('clear')\" title=\"\u6E05\u9664\u9884\u89C8\u6587\u672C\">\u6E05\u7A7A</a></p>\n  <textarea placeholder=\"\u5267\u60C5\u6587\u672C\"></textarea>\n</div>\n";
+  var html$2 = "\n<style>\n#blhxfy-story-tool {\n  display: none;\n}\n#blhxfy-story-input button,\n#blhxfy-story-tool button {\n  border: none;\n  background: none;\n  cursor: pointer;\n  padding: 4px 6px;\n  font-size: 10px;\n  margin: 0;\n  letter-spacing: 1px;\n  line-height: 1;\n  outline: none;\n  position: relative;\n  transition: none;\n  border-radius: 3px;\n  background: #539cba;\n  color: #fff;\n  box-shadow: 0 3px #165c85;\n  text-shadow: 1px 1px 2px rgba(0,0,0,0.5)\n}\n\n#blhxfy-story-input button:hover,\n#blhxfy-story-tool button:hover {\n  box-shadow: 0 2px #165c85;\n  top: 1px;\n}\n#blhxfy-story-input button:active,\n#blhxfy-story-tool button:active {\n  box-shadow: 0 1px #165c85;\n  top: 2px;\n}\n.log #blhxfy-story-tool {\n  display: block;\n  position: absolute;\n  top: 33px;\n  left: 0;\n  width: 100%;\n  z-index: 9999;\n  text-align: center;\n}\n#blhxfy-story-input {\n  position: absolute;\n  display: none;\n  top: 0;\n  left: 0;\n  width: 320px;\n  height: 100%;\n  background: #fff;\n  z-index: 10000;\n}\n.blhxfy-preview-tool {\n  padding-top: 10px;\n  padding-bottom: 10px;\n  border-bottom: 1px solid #e3e3e3;\n  display: flex;\n  justify-content: space-between;\n  padding-left: 10px;\n  padding-right: 10px;\n  background: #116d82;\n}\n#blhxfy-story-input p {\n  margin: 10px 10px 0 10px;\n  color: #5b8690;\n  text-align: left;\n  font-size: 10px;\n  position: relative;\n}\n#blhxfy-story-input p a {\n  color: #29b82d;\n  position: absolute;\n  cursor: pointer;\n  padding: 4px;\n  right: 0;\n  top: -5px;\n}\n#blhxfy-story-input textarea {\n  width: 300px;\n  height: calc(100% - 80px);\n  margin: 10px;\n  box-sizing: border-box;\n  font-size: 8px;\n  padding: 4px;\n  border-radius: 2px;\n  box-shadow: inset 0 0 3px #2c88d775;\n  outline: none;\n  resize: none;\n  font-family: Consolas, \"Microsoft Yahei\";\n}\n</style>\n<div id=\"blhxfy-story-tool\">\n  <button onclick=\"window.blhxfy.dlStoryCsv()\" title=\"\u4E0B\u8F7D\u672A\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\">\u539F\u6587</button>\n  <button onclick=\"window.blhxfy.dlStoryCsv('fill')\" title=\"\u4E0B\u8F7D\u7528\u539F\u6587\u586B\u5145trans\u5217\u7684\u5267\u60C5\u6587\u672C\">\u586B\u5145</button>\n  <button onclick=\"window.blhxfy.dlStoryCsv('trans')\" title=\"\u4E0B\u8F7D\u5DF2\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\">\u8BD1\u6587</button>\n  <button onclick=\"window.blhxfy.previewCsv('show')\" title=\"\u586B\u5199\u7FFB\u8BD1\u597D\u7684\u5267\u60C5\u6587\u672C\u6765\u9884\u89C8\">\u9884\u89C8</button>\n</div>\n<div id=\"blhxfy-story-input\">\n  <div class=\"blhxfy-preview-tool\">\n    <button onclick=\"window.blhxfy.previewCsv('hide')\">\u53D6\u6D88</button>\n    <button onclick=\"window.blhxfy.previewCsv('save')\" title=\"\u4FDD\u5B58\u9884\u89C8\u6587\u672C\u5E76\u5237\u65B0\u9875\u9762\">\u4FDD\u5B58</button>\n  </div>\n  <p>\u8BF7\u5C06\u7F16\u8F91\u597D\u7684\u5267\u60C5\u6587\u672C\u7C98\u8D34\u5230\u6587\u672C\u6846<a onclick=\"window.blhxfy.previewCsv('clear')\" title=\"\u6E05\u9664\u9884\u89C8\u6587\u672C\">\u6E05\u7A7A</a></p>\n  <textarea placeholder=\"\u5267\u60C5\u6587\u672C\"></textarea>\n</div>\n";
   function insertToolHtml () {
     var cont = $('.cnt-quest-scene');
     var tool = $('#blhxfy-story-tool');
@@ -11580,7 +11608,7 @@
   /** `Object#toString` result references. */
   var argsTag$1 = '[object Arguments]',
       arrayTag = '[object Array]',
-      boolTag = '[object Boolean]',
+      boolTag$1 = '[object Boolean]',
       dateTag = '[object Date]',
       errorTag = '[object Error]',
       funcTag$1 = '[object Function]',
@@ -11612,7 +11640,7 @@
   typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
   typedArrayTags[uint32Tag] = true;
   typedArrayTags[argsTag$1] = typedArrayTags[arrayTag] =
-  typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+  typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag$1] =
   typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
   typedArrayTags[errorTag] = typedArrayTags[funcTag$1] =
   typedArrayTags[mapTag] = typedArrayTags[numberTag] =
@@ -12408,7 +12436,7 @@
   var _cloneTypedArray = cloneTypedArray;
 
   /** `Object#toString` result references. */
-  var boolTag$1 = '[object Boolean]',
+  var boolTag$2 = '[object Boolean]',
       dateTag$1 = '[object Date]',
       mapTag$2 = '[object Map]',
       numberTag$1 = '[object Number]',
@@ -12447,7 +12475,7 @@
       case arrayBufferTag$1:
         return _cloneArrayBuffer(object);
 
-      case boolTag$1:
+      case boolTag$2:
       case dateTag$1:
         return new Ctor(+object);
 
@@ -12611,7 +12639,7 @@
   /** `Object#toString` result references. */
   var argsTag$2 = '[object Arguments]',
       arrayTag$1 = '[object Array]',
-      boolTag$2 = '[object Boolean]',
+      boolTag$3 = '[object Boolean]',
       dateTag$2 = '[object Date]',
       errorTag$1 = '[object Error]',
       funcTag$2 = '[object Function]',
@@ -12641,7 +12669,7 @@
   var cloneableTags = {};
   cloneableTags[argsTag$2] = cloneableTags[arrayTag$1] =
   cloneableTags[arrayBufferTag$2] = cloneableTags[dataViewTag$3] =
-  cloneableTags[boolTag$2] = cloneableTags[dateTag$2] =
+  cloneableTags[boolTag$3] = cloneableTags[dateTag$2] =
   cloneableTags[float32Tag$2] = cloneableTags[float64Tag$2] =
   cloneableTags[int8Tag$2] = cloneableTags[int16Tag$2] =
   cloneableTags[int32Tag$2] = cloneableTags[mapTag$4] =
@@ -12782,6 +12810,25 @@
   var cloneDeep_1 = cloneDeep;
 
   var txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+  var scenarioCache = {
+    data: null,
+    name: '',
+    originName: '',
+    hasTrans: false,
+    csv: '',
+    nameMap: null,
+    transMap: null
+  };
+
+  var getFilename = function getFilename(pathname) {
+    var rgs = pathname.match(/([^\/\\]+)$/);
+
+    if (rgs && rgs[1]) {
+      return rgs[1];
+    }
+
+    return pathname;
+  };
 
   var getScenario =
   /*#__PURE__*/
@@ -12797,7 +12844,7 @@
               csv = getPreviewCsv(name);
 
               if (csv) {
-                _context.next = 11;
+                _context.next = 12;
                 break;
               }
 
@@ -12819,13 +12866,14 @@
               });
 
             case 8:
-              _context.next = 10;
+              scenarioCache.originName = getFilename(pathname);
+              _context.next = 11;
               return fetchWithHash("/blhxfy/data/scenario/".concat(pathname));
 
-            case 10:
+            case 11:
               csv = _context.sent;
 
-            case 11:
+            case 12:
               list = parseCsv(csv);
               transMap = new Map();
               list.forEach(function (item) {
@@ -12835,6 +12883,7 @@
                   var type = idArr[1] || 'detail';
                   var obj = transMap.get(id) || {};
                   obj[type] = item.trans ? filter(item.trans.replace(/姬塔/g, config.displayName || config.userName)) : false;
+                  obj["".concat(type, "-origin")] = item.trans;
                   transMap.set(id, obj);
                 }
               });
@@ -12843,7 +12892,7 @@
                 csv: csv
               });
 
-            case 15:
+            case 16:
             case "end":
               return _context.stop();
           }
@@ -12970,14 +13019,6 @@
     }
   };
 
-  var scenarioCache = {
-    data: null,
-    name: '',
-    hasTrans: false,
-    csv: '',
-    nameMap: null
-  };
-
   var transStart =
   /*#__PURE__*/
   function () {
@@ -13026,31 +13067,33 @@
               scenarioCache.data = cloneDeep_1(data);
               scenarioCache.name = scenarioName;
               scenarioCache.hasTrans = false;
-              _context2.next = 17;
+              scenarioCache.originName = '';
+              _context2.next = 18;
               return getScenario(scenarioName);
 
-            case 17:
+            case 18:
               _ref3 = _context2.sent;
               transMap = _ref3.transMap;
               csv = _ref3.csv;
-              _context2.next = 22;
+              _context2.next = 23;
               return getNameData();
 
-            case 22:
+            case 23:
               nameData = _context2.sent;
               nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
               scenarioCache.nameMap = nameMap;
 
               if (transMap) {
-                _context2.next = 27;
+                _context2.next = 28;
                 break;
               }
 
               return _context2.abrupt("return", data);
 
-            case 27:
+            case 28:
               scenarioCache.hasTrans = true;
               scenarioCache.csv = csv;
+              scenarioCache.transMap = transMap;
               data.forEach(function (item) {
                 var name1, name2, name3;
                 name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -13066,7 +13109,7 @@
               });
               return _context2.abrupt("return", data);
 
-            case 31:
+            case 33:
             case "end":
               return _context2.stop();
           }
@@ -14740,7 +14783,7 @@
     };
   }();
 
-  var template = "\n<style>\n#btn-setting-blhxfy {\n  position: absolute;\n  left: 16px;\n  top: 104px;\n}\n#blhxfy-setting-modal {\n  display: none;\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #f6feff;\n  width: 100%;\n  min-height: 100%;\n  z-index: 99999;\n  padding-bottom: 38px;\n}\n#blhxfy-setting-modal input[type=text] {\n  display: block !important;\n  outline: none;\n  width: 274px;\n  font-size: 12px;\n  padding: 4px;\n  box-shadow: none;\n  border: 1px solid #78bbd8;\n  border-radius: 2px;\n  font-family: sans-serif;\n  color: #4d6671;\n}\n#blhxfy-setting-modal.show {\n  display: block;\n}\n#blhxfy-setting-modal input[type=text]::placeholder {\n  color: #aaa;\n}\n</style>\n<div id=\"blhxfy-setting-modal\">\n<div class=\"cnt-setting\">\n\t<div class=\"prt-setting-header\"><img class=\"img-header\" src=\"https://blhx.danmu9.com/blhxfy/data/static/image/setting-header.jpg\" alt=\"header_public\"></div>\n\n\n\t<div class=\"prt-setting-module\">\n\t\t<div class=\"txt-setting-title\">\u63D2\u4EF6\u8BBE\u7F6E</div>\n\t\t<div class=\"prt-setting-frame\">\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u7FFB\u8BD1\u6570\u636E\u57DF\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u7684\u6570\u636E\u6E90</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"origin-setting-blhxfy\" oninput=\"window.blhxfy.setting('origin', this.value)\" type=\"text\" value=\"\" placeholder=\"https://blhx.danmu9.com\">\n        </div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4F7F\u7528\u7B2C\u4E09\u65B9\u6570\u636E\u6E90\u6709\u98CE\u9669\uFF0C\u8BF7\u9009\u62E9\u53EF\u4EE5\u4FE1\u4EFB\u7684\u6570\u636E\u6E90\u3002\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u4E3B\u89D2\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5267\u60C5\u91CC\u663E\u793A\u7684\u4E3B\u89D2\u540D\u5B57\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u4F60\u81EA\u5DF1\u7684\u6635\u79F0</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"username-setting-blhxfy\" oninput=\"window.blhxfy.setting('username', this.value)\" type=\"text\" value=\"\" placeholder=\"\u8BF7\u8F93\u5165\u4E3B\u89D2\u540D\">\n\t\t\t\t</div>\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u5267\u60C5CSV\u6587\u4EF6\u5FEB\u6377\u4E0B\u8F7D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728 SKIP \u7684\u65F6\u5019\u81EA\u52A8\u4E0B\u8F7D\u5267\u60C5CSV</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"auto-download-setting-blhxfy\" onchange=\"window.blhxfy.setting('auto-download', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"auto-download-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u81EA\u52A8\u4E0B\u8F7DCSV</label>\n\t\t\t\t\t</div>\n        </div>\n      </div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5728\u624B\u673A\u6D4F\u89C8\u5668\u4E0A\u4E5F\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"bottom-toolbar-setting-blhxfy\" onchange=\"window.blhxfy.setting('bottom-toolbar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"bottom-toolbar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u5E95\u90E8\u5DE5\u5177\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4FEE\u6539\u7684\u8BBE\u7F6E\u5728\u5237\u65B0\u9875\u9762\u540E\u751F\u6548\n      </div>\n\t\t</div>\n\t</div>\n\n\n\t<div class=\"prt-lead-link\">\n\t\t<div class=\"lis-lead-prev\" data-href=\"setting\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u8BBE\u7F6E</div></div>\n\t\t<div class=\"lis-lead-prev\" data-href=\"mypage\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u9996\u9875</div></div>\n\t</div>\n</div>\n</div>\n";
+  var template = "\n<style>\n#btn-setting-blhxfy {\n  position: absolute;\n  left: 16px;\n  top: 104px;\n}\n#blhxfy-setting-modal {\n  display: none;\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #f6feff;\n  width: 100%;\n  min-height: 100%;\n  z-index: 99999;\n  padding-bottom: 38px;\n}\n#blhxfy-setting-modal input[type=text] {\n  display: block !important;\n  outline: none;\n  width: 274px;\n  font-size: 12px;\n  padding: 4px;\n  box-shadow: none;\n  border: 1px solid #78bbd8;\n  border-radius: 2px;\n  font-family: sans-serif;\n  color: #4d6671;\n}\n#blhxfy-setting-modal.show {\n  display: block;\n}\n#blhxfy-setting-modal input[type=text]::placeholder {\n  color: #aaa;\n}\n</style>\n<div id=\"blhxfy-setting-modal\">\n<div class=\"cnt-setting\">\n\t<div class=\"prt-setting-header\"><img class=\"img-header\" src=\"https://blhx.danmu9.com/blhxfy/data/static/image/setting-header.jpg\" alt=\"header_public\"></div>\n\n\n\t<div class=\"prt-setting-module\">\n\t\t<div class=\"txt-setting-title\">\u63D2\u4EF6\u8BBE\u7F6E</div>\n\t\t<div class=\"prt-setting-frame\">\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u7FFB\u8BD1\u6570\u636E\u57DF\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u7684\u6570\u636E\u6E90</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"origin-setting-blhxfy\" oninput=\"window.blhxfy.setting('origin', this.value)\" type=\"text\" value=\"\" placeholder=\"https://blhx.danmu9.com\">\n        </div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4F7F\u7528\u7B2C\u4E09\u65B9\u6570\u636E\u6E90\u6709\u98CE\u9669\uFF0C\u8BF7\u9009\u62E9\u53EF\u4EE5\u4FE1\u4EFB\u7684\u6570\u636E\u6E90\u3002\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u4E3B\u89D2\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5267\u60C5\u91CC\u663E\u793A\u7684\u4E3B\u89D2\u540D\u5B57\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u4F60\u81EA\u5DF1\u7684\u6635\u79F0</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"username-setting-blhxfy\" oninput=\"window.blhxfy.setting('username', this.value)\" type=\"text\" value=\"\" placeholder=\"\u8BF7\u8F93\u5165\u4E3B\u89D2\u540D\">\n\t\t\t\t</div>\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u5267\u60C5CSV\u6587\u4EF6\u5FEB\u6377\u4E0B\u8F7D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728 SKIP \u7684\u65F6\u5019\u81EA\u52A8\u4E0B\u8F7D\u5267\u60C5CSV</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"auto-download-setting-blhxfy\" onchange=\"window.blhxfy.setting('auto-download', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"auto-download-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u81EA\u52A8\u4E0B\u8F7DCSV</label>\n\t\t\t\t\t</div>\n        </div>\n      </div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u9690\u85CF\u7F51\u9875\u6EDA\u52A8\u6761</div>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"remove-scroller-setting-blhxfy\" onchange=\"window.blhxfy.setting('remove-scroller', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"remove-scroller-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u6EDA\u52A8\u6761</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5728\u624B\u673A\u6D4F\u89C8\u5668\u4E0A\u4E5F\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"bottom-toolbar-setting-blhxfy\" onchange=\"window.blhxfy.setting('bottom-toolbar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"bottom-toolbar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u5E95\u90E8\u5DE5\u5177\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4FEE\u6539\u7684\u8BBE\u7F6E\u5728\u5237\u65B0\u9875\u9762\u540E\u751F\u6548\n      </div>\n\t\t</div>\n\t</div>\n\n\n\t<div class=\"prt-lead-link\">\n\t\t<div class=\"lis-lead-prev\" data-href=\"setting\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u8BBE\u7F6E</div></div>\n\t\t<div class=\"lis-lead-prev\" data-href=\"mypage\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u9996\u9875</div></div>\n\t</div>\n</div>\n</div>\n";
   function insertSettingHtml (html) {
     return html.replace('<div class="cnt-setting">', "".concat(template, "<div class=\"cnt-setting\"><div class=\"cnt-setting\"><div class=\"btn-usual-text\" id=\"btn-setting-blhxfy\" onclick=\"window.blhxfy.setting('show')\">\u6C49\u5316\u63D2\u4EF6\u8BBE\u7F6E</div>"));
   }
@@ -16183,7 +16226,7 @@
     }
   };
 
-  var dataToCsv = function dataToCsv(data, fill) {
+  var dataToCsv = function dataToCsv(data, fill, isTrans) {
     var result = [];
     data.forEach(function (item) {
       var name = removeTag(item.charcter1_name);
@@ -16196,11 +16239,23 @@
 
         if (txt) {
           txt = txt.replace(/\n/g, '');
+          var trans = '';
+
+          if (isTrans) {
+            var obj = scenarioCache.transMap.get(item.id);
+
+            if (obj && obj["".concat(key, "-origin")]) {
+              trans = obj["".concat(key, "-origin")];
+            }
+          } else if (fill) {
+            trans = txt;
+          }
+
           result.push({
             id: "".concat(item.id).concat(key === 'detail' ? '' : '-' + key),
             name: hasName ? "".concat(name).concat(hasTransName ? '/' + transName : '') : '',
             text: txt,
-            trans: fill ? txt : ''
+            trans: trans
           });
         }
       });
@@ -16223,7 +16278,7 @@
       tryDownload(dataToCsv(scenarioCache.data), scenarioCache.name + '.csv');
     } else if (type === 'trans') {
       if (scenarioCache.hasTrans) {
-        tryDownload(scenarioCache.csv, scenarioCache.name + '.csv');
+        tryDownload(dataToCsv(scenarioCache.data, false, true), scenarioCache.originName);
       } else {
         alert('这个章节还没有翻译。');
       }
@@ -16265,7 +16320,7 @@
     }
 
     if (!exist) {
-      if (data.length >= 3) {
+      if (data.length >= 5) {
         data.shift();
       }
 
@@ -16312,6 +16367,16 @@
     document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute('content', '碧蓝幻想');
     document.title = '碧蓝幻想';
   });
+
+  var removeScroller = function removeScroller() {
+    if (config.removeScroller) {
+      var style = document.createElement('style');
+      style.innerHTML = "\n      ::-webkit-scrollbar {\n        display: none;\n      }\n    ";
+      document.head.appendChild(style);
+    }
+  };
+
+  removeScroller();
 
   /**
    * Gets the timestamp of the number of milliseconds that have elapsed since
@@ -16631,7 +16696,7 @@
     localStorage.setItem('blhxfy:setting', JSON.stringify(data));
   };
 
-  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName']]);
+  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller']]);
 
   var setting = function setting(type, value) {
     if (type === 'show') {
@@ -16669,7 +16734,7 @@
       }
 
       $('#blhxfy-setting-modal').addClass('show');
-    } else if (type === 'origin' || type === 'auto-download' || type === 'bottom-toolbar' || type === 'username') {
+    } else {
       saveToLocalstorage(keyMap.get(type), value);
     }
   };
