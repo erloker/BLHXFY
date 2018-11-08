@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.7
+// @version      1.1.8
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5740,10 +5740,12 @@
 	};
 
 	const getLocalHash = () => {
-	  const str = sessionStorage.getItem('blhxfy:data');
-	  const data = JSON.parse(str);
-	  config.localHash = data.hash;
-	  return data.hash;
+	  try {
+	    const str = sessionStorage.getItem('blhxfy:data');
+	    const data = JSON.parse(str);
+	    config.localHash = data.hash;
+	  } catch (err) {// ignore
+	  }
 	};
 
 	getLocalConfig();

@@ -5726,10 +5726,12 @@
 	};
 
 	const getLocalHash = () => {
-	  const str = sessionStorage.getItem('blhxfy:data');
-	  const data = JSON.parse(str);
-	  config.localHash = data.hash;
-	  return data.hash;
+	  try {
+	    const str = sessionStorage.getItem('blhxfy:data');
+	    const data = JSON.parse(str);
+	    config.localHash = data.hash;
+	  } catch (err) {// ignore
+	  }
 	};
 
 	getLocalConfig();
