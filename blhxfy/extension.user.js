@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.6
+// @version      1.1.7
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5711,7 +5711,9 @@
 	  timeout: 8,
 	  autoDownload: false,
 	  bottomToolbar: false,
-	  removeScroller: true
+	  removeScroller: true,
+	  hideSidebar: false,
+	  localHash: ''
 	};
 
 	const getLocalConfig = () => {
@@ -5726,7 +5728,7 @@
 	    config.origin = origin.trim();
 	  }
 
-	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller'];
+	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar'];
 	  keys.forEach(key => {
 	    let value = setting[key];
 	    if (isString_1(value)) value = filter(value.trim());
@@ -5737,7 +5739,15 @@
 	  });
 	};
 
+	const getLocalHash = () => {
+	  const str = sessionStorage.getItem('blhxfy:data');
+	  const data = JSON.parse(str);
+	  config.localHash = data.hash;
+	  return data.hash;
+	};
+
 	getLocalConfig();
+	getLocalHash();
 
 	const {
 	  origin
@@ -5745,11 +5755,11 @@
 	let ee = new events();
 	let lecia;
 
-	const insertCSS = (name, hash) => {
+	const insertCSS = name => {
 	  const link = document.createElement('link');
 	  link.type = 'text/css';
 	  link.rel = 'stylesheet';
-	  link.href = `${origin}/blhxfy/data/static/style/${name}.css?lecia=${hash}`;
+	  link.href = `${origin}/blhxfy/data/static/style/${name}.css?lecia=${config.hash || config.localHash}`;
 	  document.head.appendChild(link);
 	};
 
@@ -5815,7 +5825,7 @@
 	const getHash = fetchData('/blhxfy/manifest.json').then(data => data.hash);
 	getHash.then(hash => {
 	  config.hash = hash;
-	  insertCSS('BLHXFY', hash);
+	  insertCSS('BLHXFY');
 	  return hash;
 	});
 
@@ -11066,11 +11076,15 @@
       </div>
 
 			<div class="prt-setting-article">
-				<div class="txt-article-title">隐藏网页滚动条</div>
+				<div class="txt-article-title">UI设置</div>
 				<div class="prt-button-l">
 					<div>
 						<input id="remove-scroller-setting-blhxfy" onchange="window.blhxfy.setting('remove-scroller', this.checked)" type="checkbox" value="">
 						<label for="remove-scroller-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">隐藏滚动条</label>
+					</div>
+					<div>
+						<input id="hide-sidebar-setting-blhxfy" onchange="window.blhxfy.setting('hide-sidebar', this.checked)" type="checkbox" value="">
+						<label for="hide-sidebar-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">隐藏侧边栏</label>
 					</div>
 				</div>
 			</div>
@@ -11950,6 +11964,14 @@
 
 	removeScroller();
 
+	const hideSidebar = () => {
+	  if (config.hideSidebar) {
+	    insertCSS('hide-sidebar');
+	  }
+	};
+
+	hideSidebar();
+
 	/**
 	 * Gets the timestamp of the number of milliseconds that have elapsed since
 	 * the Unix epoch (1 January 1970 00:00:00 UTC).
@@ -12268,7 +12290,7 @@
 	  localStorage.setItem('blhxfy:setting', JSON.stringify(data));
 	};
 
-	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller']]);
+	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar']]);
 
 	const setting = (type, value) => {
 	  if (type === 'show') {
