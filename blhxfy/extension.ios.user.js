@@ -11394,7 +11394,6 @@ ${extraHtml}
 	    messages = mydata.messages;
 	    status = mydata.status;
 	  } catch (err) {
-	    console.error(err);
 	    return data;
 	  }
 
@@ -11410,6 +11409,23 @@ ${extraHtml}
 
 	  status.action_point_remain = replaceTime(status.action_point_remain);
 	  status.battle_point_remain = replaceTime(status.battle_point_remain);
+	  return data;
+	};
+
+	const replaceHour = data => {
+	  let status;
+
+	  try {
+	    status = data.option.user_status;
+	  } catch (e) {
+	    return data;
+	  }
+
+	  if (status) {
+	    if (status.action_point_remain) status.action_point_remain = replaceTime(status.action_point_remain);
+	    if (status.battle_point_remain) status.battle_point_remain = replaceTime(status.battle_point_remain);
+	  }
+
 	  return data;
 	};
 
@@ -11598,6 +11614,8 @@ ${extraHtml}
 	        if (pathname.includes('/user/content/index')) {
 	          data = await transTownInfo(data, pathname);
 	          data = await pageIndex(data, pathname);
+	        } else {
+	          data = replaceHour(data);
 	        }
 	      } catch (err) {
 	        console.error(err);

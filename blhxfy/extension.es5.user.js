@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.9
+// @version      1.1.10
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -15490,16 +15490,15 @@
               mydata = data.option.mydata_assets.mydata;
               messages = mydata.messages;
               status = mydata.status;
-              _context.next = 10;
+              _context.next = 9;
               break;
 
             case 6:
               _context.prev = 6;
               _context.t0 = _context["catch"](0);
-              console.error(_context.t0);
               return _context.abrupt("return", data);
 
-            case 10:
+            case 9:
               if (messages.length) {
                 newMessages = [];
                 messages.forEach(function (item) {
@@ -15514,7 +15513,7 @@
               status.battle_point_remain = replaceTime(status.battle_point_remain);
               return _context.abrupt("return", data);
 
-            case 14:
+            case 13:
             case "end":
               return _context.stop();
           }
@@ -15526,6 +15525,23 @@
       return _ref.apply(this, arguments);
     };
   }();
+
+  var replaceHour = function replaceHour(data) {
+    var status;
+
+    try {
+      status = data.option.user_status;
+    } catch (e) {
+      return data;
+    }
+
+    if (status) {
+      if (status.action_point_remain) status.action_point_remain = replaceTime(status.action_point_remain);
+      if (status.battle_point_remain) status.battle_point_remain = replaceTime(status.battle_point_remain);
+    }
+
+    return data;
+  };
 
   var voiceMap = new Map();
   var loaded$9 = false;
@@ -15834,7 +15850,7 @@
               }
 
               if (!(apiHosts.indexOf(hostname) !== -1)) {
-                _context.next = 74;
+                _context.next = 77;
                 break;
               }
 
@@ -15849,12 +15865,12 @@
 
             case 11:
               data = _context.sent;
-              _context.next = 72;
+              _context.next = 75;
               break;
 
             case 14:
               if (!pathname.includes('/content/')) {
-                _context.next = 37;
+                _context.next = 40;
                 break;
               }
 
@@ -15871,7 +15887,7 @@
               data = _context.sent;
 
               if (!pathname.includes('/user/content/index')) {
-                _context.next = 27;
+                _context.next = 29;
                 break;
               }
 
@@ -15885,109 +15901,107 @@
 
             case 26:
               data = _context.sent;
-
-            case 27:
-              _context.next = 32;
+              _context.next = 30;
               break;
 
             case 29:
-              _context.prev = 29;
+              data = replaceHour(data);
+
+            case 30:
+              _context.next = 35;
+              break;
+
+            case 32:
+              _context.prev = 32;
               _context.t0 = _context["catch"](15);
               console.error(_context.t0);
 
-            case 32:
-              _context.next = 34;
+            case 35:
+              _context.next = 37;
               return transHTML(data, pathname);
 
-            case 34:
-              data = _context.sent;
-              _context.next = 72;
-              break;
-
             case 37:
-              if (!(pathname.includes('/npc/npc/') || pathname.includes('/archive/npc_detail'))) {
-                _context.next = 43;
-                break;
-              }
-
-              _context.next = 40;
-              return parseSkill(data, pathname);
+              data = _context.sent;
+              _context.next = 75;
+              break;
 
             case 40:
-              data = _context.sent;
-              _context.next = 72;
-              break;
+              if (!(pathname.includes('/npc/npc/') || pathname.includes('/archive/npc_detail'))) {
+                _context.next = 46;
+                break;
+              }
+
+              _context.next = 43;
+              return parseSkill(data, pathname);
 
             case 43:
-              if (!(pathname.includes('/party_ability_subaction/') || pathname.includes('/party/job/') || pathname.includes('/party/ability_list/') || pathname.includes('/zenith/ability_list/') || pathname.includes('/party/job_info/'))) {
-                _context.next = 49;
-                break;
-              }
-
-              _context.next = 46;
-              return transSkill$1(data, pathname);
+              data = _context.sent;
+              _context.next = 75;
+              break;
 
             case 46:
-              data = _context.sent;
-              _context.next = 72;
-              break;
+              if (!(pathname.includes('/party_ability_subaction/') || pathname.includes('/party/job/') || pathname.includes('/party/ability_list/') || pathname.includes('/zenith/ability_list/') || pathname.includes('/party/job_info/'))) {
+                _context.next = 52;
+                break;
+              }
+
+              _context.next = 49;
+              return transSkill$1(data, pathname);
 
             case 49:
-              if (!pathname.includes('/island/init')) {
-                _context.next = 55;
-                break;
-              }
-
-              _context.next = 52;
-              return transIslandInfo(data, pathname);
+              data = _context.sent;
+              _context.next = 75;
+              break;
 
             case 52:
-              data = _context.sent;
-              _context.next = 72;
-              break;
+              if (!pathname.includes('/island/init')) {
+                _context.next = 58;
+                break;
+              }
+
+              _context.next = 55;
+              return transIslandInfo(data, pathname);
 
             case 55:
-              if (!pathname.includes('/rest/sound/mypage_voice')) {
-                _context.next = 60;
-                break;
-              }
-
-              _context.next = 58;
-              return showVoiceSub(data, pathname, 'list');
+              data = _context.sent;
+              _context.next = 75;
+              break;
 
             case 58:
-              _context.next = 72;
-              break;
-
-            case 60:
-              if (!pathname.includes('/rest/multiraid/start.json')) {
-                _context.next = 66;
+              if (!pathname.includes('/rest/sound/mypage_voice')) {
+                _context.next = 63;
                 break;
               }
 
-              _context.next = 63;
-              return transChat(data);
+              _context.next = 61;
+              return showVoiceSub(data, pathname, 'list');
+
+            case 61:
+              _context.next = 75;
+              break;
 
             case 63:
-              data = _context.sent;
-              _context.next = 72;
-              break;
-
-            case 66:
-              if (!/\/rest\/.*?raid\/condition\/\d+\/\d\/\d\.json/.test(pathname)) {
-                _context.next = 71;
+              if (!pathname.includes('/rest/multiraid/start.json')) {
+                _context.next = 69;
                 break;
               }
 
-              _context.next = 69;
-              return transBuff(data.condition);
+              _context.next = 66;
+              return transChat(data);
 
-            case 69:
-              _context.next = 72;
+            case 66:
+              data = _context.sent;
+              _context.next = 75;
               break;
 
-            case 71:
-              return _context.abrupt("return");
+            case 69:
+              if (!/\/rest\/.*?raid\/condition\/\d+\/\d\/\d\.json/.test(pathname)) {
+                _context.next = 74;
+                break;
+              }
+
+              _context.next = 72;
+              return transBuff(data.condition);
 
             case 72:
               _context.next = 75;
@@ -15997,14 +16011,21 @@
               return _context.abrupt("return");
 
             case 75:
+              _context.next = 78;
+              break;
+
+            case 77:
+              return _context.abrupt("return");
+
+            case 78:
               state.result = isJSON ? JSON.stringify(data) : data;
 
-            case 76:
+            case 79:
             case "end":
               return _context.stop();
           }
         }
-      }, _callee, this, [[15, 29]]);
+      }, _callee, this, [[15, 32]]);
     }));
     return _translate.apply(this, arguments);
   }
