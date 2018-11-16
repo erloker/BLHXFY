@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.10
+// @version      1.2.0
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
 // @match        *://game.granbluefantasy.jp/*
 // @match        *://gbf.game.mbga.jp/*
 // @run-at       document-body
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      translate.google.cn
 // @updateURL    https://blhx.danmu9.com/blhxfy/extension.es5.user.js
 // @supportURL   https://github.com/biuuu/BLHXFY/issues
 // ==/UserScript==
@@ -5691,18 +5692,6 @@
     }
   };
 
-  // @@replace logic
-  _fixReWks('replace', 2, function (defined, REPLACE, $replace) {
-    // 21.1.3.14 String.prototype.replace(searchValue, replaceValue)
-    return [function replace(searchValue, replaceValue) {
-      var O = defined(this);
-      var fn = searchValue == undefined ? undefined : searchValue[REPLACE];
-      return fn !== undefined
-        ? fn.call(searchValue, O, replaceValue)
-        : $replace.call(String(O), searchValue, replaceValue);
-    }, $replace];
-  });
-
   // @@split logic
   _fixReWks('split', 2, function (defined, SPLIT, $split) {
     var isRegExp = _isRegexp;
@@ -5785,6 +5774,48 @@
   };
 
   var dP$2 = _objectDp.f;
+  var gOPN$2 = _objectGopn.f;
+
+
+  var $RegExp = _global.RegExp;
+  var Base = $RegExp;
+  var proto$1 = $RegExp.prototype;
+  var re1 = /a/g;
+  var re2 = /a/g;
+  // "new" creates a new object, old webkit buggy here
+  var CORRECT_NEW = new $RegExp(re1) !== re1;
+
+  if (_descriptors && (!CORRECT_NEW || _fails(function () {
+    re2[_wks('match')] = false;
+    // RegExp constructor can alter flags and IsRegExp works correct with @@match
+    return $RegExp(re1) != re1 || $RegExp(re2) == re2 || $RegExp(re1, 'i') != '/a/i';
+  }))) {
+    $RegExp = function RegExp(p, f) {
+      var tiRE = this instanceof $RegExp;
+      var piRE = _isRegexp(p);
+      var fiU = f === undefined;
+      return !tiRE && piRE && p.constructor === $RegExp && fiU ? p
+        : _inheritIfRequired(CORRECT_NEW
+          ? new Base(piRE && !fiU ? p.source : p, f)
+          : Base((piRE = p instanceof $RegExp) ? p.source : p, piRE && fiU ? _flags.call(p) : f)
+        , tiRE ? this : proto$1, $RegExp);
+    };
+    var proxy = function (key) {
+      key in $RegExp || dP$2($RegExp, key, {
+        configurable: true,
+        get: function () { return Base[key]; },
+        set: function (it) { Base[key] = it; }
+      });
+    };
+    for (var keys = gOPN$2(Base), i$1 = 0; keys.length > i$1;) proxy(keys[i$1++]);
+    proto$1.constructor = $RegExp;
+    $RegExp.prototype = proto$1;
+    _redefine(_global, 'RegExp', $RegExp);
+  }
+
+  _setSpecies('RegExp');
+
+  var dP$3 = _objectDp.f;
 
 
 
@@ -5867,7 +5898,7 @@
           return !!getEntry(_validateCollection(this, NAME), key);
         }
       });
-      if (_descriptors) dP$2(C.prototype, 'size', {
+      if (_descriptors) dP$3(C.prototype, 'size', {
         get: function () {
           return _validateCollection(this, NAME)[SIZE];
         }
@@ -5944,16 +5975,6 @@
       return _collectionStrong.def(_validateCollection(this, MAP), key === 0 ? 0 : key, value);
     }
   }, _collectionStrong, true);
-
-  // @@match logic
-  _fixReWks('match', 1, function (defined, MATCH, $match) {
-    // 21.1.3.11 String.prototype.match(regexp)
-    return [function match(regexp) {
-      var O = defined(this);
-      var fn = regexp == undefined ? undefined : regexp[MATCH];
-      return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
-    }, $match];
-  });
 
   // 7.3.20 SpeciesConstructor(O, defaultConstructor)
 
@@ -6450,6 +6471,28 @@
     }
   });
 
+  // @@replace logic
+  _fixReWks('replace', 2, function (defined, REPLACE, $replace) {
+    // 21.1.3.14 String.prototype.replace(searchValue, replaceValue)
+    return [function replace(searchValue, replaceValue) {
+      var O = defined(this);
+      var fn = searchValue == undefined ? undefined : searchValue[REPLACE];
+      return fn !== undefined
+        ? fn.call(searchValue, O, replaceValue)
+        : $replace.call(String(O), searchValue, replaceValue);
+    }, $replace];
+  });
+
+  // @@match logic
+  _fixReWks('match', 1, function (defined, MATCH, $match) {
+    // 21.1.3.11 String.prototype.match(regexp)
+    return [function match(regexp) {
+      var O = defined(this);
+      var fn = regexp == undefined ? undefined : regexp[MATCH];
+      return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
+    }, $match];
+  });
+
   // Copyright Joyent, Inc. and other Node contributors.
 
   var R = typeof Reflect === 'object' ? Reflect : null;
@@ -6877,48 +6920,6 @@
     }
     return ret;
   }
-
-  var dP$3 = _objectDp.f;
-  var gOPN$2 = _objectGopn.f;
-
-
-  var $RegExp = _global.RegExp;
-  var Base = $RegExp;
-  var proto$1 = $RegExp.prototype;
-  var re1 = /a/g;
-  var re2 = /a/g;
-  // "new" creates a new object, old webkit buggy here
-  var CORRECT_NEW = new $RegExp(re1) !== re1;
-
-  if (_descriptors && (!CORRECT_NEW || _fails(function () {
-    re2[_wks('match')] = false;
-    // RegExp constructor can alter flags and IsRegExp works correct with @@match
-    return $RegExp(re1) != re1 || $RegExp(re2) == re2 || $RegExp(re1, 'i') != '/a/i';
-  }))) {
-    $RegExp = function RegExp(p, f) {
-      var tiRE = this instanceof $RegExp;
-      var piRE = _isRegexp(p);
-      var fiU = f === undefined;
-      return !tiRE && piRE && p.constructor === $RegExp && fiU ? p
-        : _inheritIfRequired(CORRECT_NEW
-          ? new Base(piRE && !fiU ? p.source : p, f)
-          : Base((piRE = p instanceof $RegExp) ? p.source : p, piRE && fiU ? _flags.call(p) : f)
-        , tiRE ? this : proto$1, $RegExp);
-    };
-    var proxy = function (key) {
-      key in $RegExp || dP$3($RegExp, key, {
-        configurable: true,
-        get: function () { return Base[key]; },
-        set: function (it) { Base[key] = it; }
-      });
-    };
-    for (var keys = gOPN$2(Base), i$1 = 0; keys.length > i$1;) proxy(keys[i$1++]);
-    proto$1.constructor = $RegExp;
-    $RegExp.prototype = proto$1;
-    _redefine(_global, 'RegExp', $RegExp);
-  }
-
-  _setSpecies('RegExp');
 
   var STARTS_WITH = 'startsWith';
   var $startsWith = ''[STARTS_WITH];
@@ -7940,6 +7941,11 @@
     return html;
   };
 
+  var removeHtmlTag = function removeHtmlTag(str) {
+    if (!/<[^>]{1,10}>/.test(str)) return str;
+    return str.replace(/<br\s?\/?>/g, '').replace(/<(\w{1,7})[^>]*>([^<]*)<\/\1>/g, '$2');
+  };
+
   var replaceWords = function replaceWords(str, map) {
     var lang = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'en';
     if (!str) return str;
@@ -8361,12 +8367,15 @@
     hash: '',
     userName: '',
     displayName: '',
+    defaultName: '姬塔',
     timeout: 8,
     autoDownload: false,
     bottomToolbar: false,
     removeScroller: true,
     hideSidebar: false,
-    localHash: ''
+    localHash: '',
+    transJp: false,
+    transEn: true
   };
 
   var getLocalConfig = function getLocalConfig() {
@@ -8380,7 +8389,7 @@
       config.origin = origin.trim();
     }
 
-    var keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar'];
+    var keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar', 'transJp', 'transEn'];
     keys.forEach(function (key) {
       var value = setting[key];
       if (isString_1(value)) value = filter(value.trim());
@@ -10397,7 +10406,10 @@
 
   var enNameMap = new Map();
   var jpNameMap = new Map();
+  var nounMap = new Map();
+  var nounFixMap = new Map();
   var loaded = false;
+  var nounLoaded = false;
 
   var nameWithScenario = function nameWithScenario(list) {
     var key = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'name';
@@ -10492,13 +10504,81 @@
     };
   }();
 
-  var template = "\n<style>\n#btn-setting-blhxfy {\n  position: absolute;\n  left: 16px;\n  top: 104px;\n}\n#blhxfy-setting-modal {\n  display: none;\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #f6feff;\n  width: 100%;\n  min-height: 100%;\n  z-index: 99999;\n  padding-bottom: 38px;\n}\n#blhxfy-setting-modal input[type=text] {\n  display: block !important;\n  outline: none;\n  width: 274px;\n  font-size: 12px;\n  padding: 4px;\n  box-shadow: none;\n  border: 1px solid #78bbd8;\n  border-radius: 2px;\n  font-family: sans-serif;\n  color: #4d6671;\n}\n#blhxfy-setting-modal.show {\n  display: block;\n}\n#blhxfy-setting-modal input[type=text]::placeholder {\n  color: #aaa;\n}\n</style>\n<div id=\"blhxfy-setting-modal\">\n<div class=\"cnt-setting\">\n\t<div class=\"prt-setting-header\"><img class=\"img-header\" src=\"https://blhx.danmu9.com/blhxfy/data/static/image/setting-header.jpg\" alt=\"header_public\"></div>\n\n\n\t<div class=\"prt-setting-module\">\n\t\t<div class=\"txt-setting-title\">\u63D2\u4EF6\u8BBE\u7F6E</div>\n\t\t<div class=\"prt-setting-frame\">\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u7FFB\u8BD1\u6570\u636E\u57DF\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u7684\u6570\u636E\u6E90</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"origin-setting-blhxfy\" oninput=\"window.blhxfy.setting('origin', this.value)\" type=\"text\" value=\"\" placeholder=\"https://blhx.danmu9.com\">\n        </div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4F7F\u7528\u7B2C\u4E09\u65B9\u6570\u636E\u6E90\u6709\u98CE\u9669\uFF0C\u8BF7\u9009\u62E9\u53EF\u4EE5\u4FE1\u4EFB\u7684\u6570\u636E\u6E90\u3002\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u4E3B\u89D2\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5267\u60C5\u91CC\u663E\u793A\u7684\u4E3B\u89D2\u540D\u5B57\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u4F60\u81EA\u5DF1\u7684\u6635\u79F0</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"username-setting-blhxfy\" oninput=\"window.blhxfy.setting('username', this.value)\" type=\"text\" value=\"\" placeholder=\"\u8BF7\u8F93\u5165\u4E3B\u89D2\u540D\">\n\t\t\t\t</div>\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u5267\u60C5CSV\u6587\u4EF6\u5FEB\u6377\u4E0B\u8F7D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728 SKIP \u7684\u65F6\u5019\u81EA\u52A8\u4E0B\u8F7D\u5267\u60C5CSV</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"auto-download-setting-blhxfy\" onchange=\"window.blhxfy.setting('auto-download', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"auto-download-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u81EA\u52A8\u4E0B\u8F7DCSV</label>\n\t\t\t\t\t</div>\n        </div>\n      </div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">UI\u8BBE\u7F6E</div>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"remove-scroller-setting-blhxfy\" onchange=\"window.blhxfy.setting('remove-scroller', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"remove-scroller-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u6EDA\u52A8\u6761</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"hide-sidebar-setting-blhxfy\" onchange=\"window.blhxfy.setting('hide-sidebar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"hide-sidebar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u4FA7\u8FB9\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5728\u624B\u673A\u6D4F\u89C8\u5668\u4E0A\u4E5F\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"bottom-toolbar-setting-blhxfy\" onchange=\"window.blhxfy.setting('bottom-toolbar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"bottom-toolbar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u5E95\u90E8\u5DE5\u5177\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4FEE\u6539\u7684\u8BBE\u7F6E\u5728\u5237\u65B0\u9875\u9762\u540E\u751F\u6548\n      </div>\n\t\t</div>\n\t</div>\n\n\n\t<div class=\"prt-lead-link\">\n\t\t<div class=\"lis-lead-prev\" data-href=\"setting\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u8BBE\u7F6E</div></div>\n\t\t<div class=\"lis-lead-prev\" data-href=\"mypage\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u9996\u9875</div></div>\n\t</div>\n</div>\n</div>\n";
+  var getNounData =
+  /*#__PURE__*/
+  function () {
+    var _ref2 = _asyncToGenerator(
+    /*#__PURE__*/
+    regeneratorRuntime.mark(function _callee2() {
+      var noun, nounFix, listNoun, listNounFix;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              if (nounLoaded) {
+                _context2.next = 12;
+                break;
+              }
+
+              _context2.next = 3;
+              return fetchWithHash('/blhxfy/data/noun.csv');
+
+            case 3:
+              noun = _context2.sent;
+              _context2.next = 6;
+              return fetchWithHash('/blhxfy/data/noun-fix.csv');
+
+            case 6:
+              nounFix = _context2.sent;
+              listNoun = parseCsv(noun);
+              listNounFix = parseCsv(nounFix);
+              sortKeywords(listNoun, 'keyword').forEach(function (item) {
+                var keyword = trim(item.keyword);
+                var trans = filter(trim(item.trans));
+
+                if (keyword && trans) {
+                  nounMap.set(keyword, {
+                    trans: trans,
+                    ignoreCase: !item.cs
+                  });
+                }
+              });
+              sortKeywords(listNounFix, 'text').forEach(function (item) {
+                var text = trim(item.text);
+                var fix = filter(trim(item.fix));
+
+                if (text && fix) {
+                  nounFixMap.set(text, fix);
+                }
+              });
+              nounLoaded = true;
+
+            case 12:
+              return _context2.abrupt("return", {
+                nounMap: nounMap,
+                nounFixMap: nounFixMap
+              });
+
+            case 13:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this);
+    }));
+
+    return function getNounData() {
+      return _ref2.apply(this, arguments);
+    };
+  }();
+
+  var template = "\n<style>\n#btn-setting-blhxfy {\n  position: absolute;\n  left: 16px;\n  top: 104px;\n}\n#blhxfy-setting-modal {\n  display: none;\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #f6feff;\n  width: 100%;\n  min-height: 100%;\n  z-index: 99999;\n  padding-bottom: 38px;\n}\n#blhxfy-setting-modal input[type=text] {\n  display: block !important;\n  outline: none;\n  width: 274px;\n  font-size: 12px;\n  padding: 4px;\n  box-shadow: none;\n  border: 1px solid #78bbd8;\n  border-radius: 2px;\n  font-family: sans-serif;\n  color: #4d6671;\n}\n#blhxfy-setting-modal.show {\n  display: block;\n}\n#blhxfy-setting-modal input[type=text]::placeholder {\n  color: #aaa;\n}\n</style>\n<div id=\"blhxfy-setting-modal\">\n<div class=\"cnt-setting\">\n\t<div class=\"prt-setting-header\"><img class=\"img-header\" src=\"https://blhx.danmu9.com/blhxfy/data/static/image/setting-header.jpg\" alt=\"header_public\"></div>\n\n\n\t<div class=\"prt-setting-module\">\n\t\t<div class=\"txt-setting-title\">\u63D2\u4EF6\u8BBE\u7F6E</div>\n\t\t<div class=\"prt-setting-frame\">\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u7FFB\u8BD1\u6570\u636E\u57DF\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u7684\u6570\u636E\u6E90</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"origin-setting-blhxfy\" oninput=\"window.blhxfy.sendEvent('setting', 'origin', this.value)\" type=\"text\" value=\"\" placeholder=\"https://blhx.danmu9.com\">\n        </div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4F7F\u7528\u7B2C\u4E09\u65B9\u6570\u636E\u6E90\u6709\u98CE\u9669\uFF0C\u8BF7\u9009\u62E9\u53EF\u4EE5\u4FE1\u4EFB\u7684\u6570\u636E\u6E90\u3002\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u4E3B\u89D2\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5267\u60C5\u91CC\u663E\u793A\u7684\u4E3B\u89D2\u540D\u5B57\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u4F60\u81EA\u5DF1\u7684\u6635\u79F0</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"username-setting-blhxfy\" oninput=\"window.blhxfy.sendEvent('setting', 'username', this.value)\" type=\"text\" value=\"\" placeholder=\"\u8BF7\u8F93\u5165\u4E3B\u89D2\u540D\">\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u673A\u7FFB\u8BBE\u7F6E</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u4EC5\u5728\u811A\u672C\u901A\u8FC7\u6CB9\u7334\u63D2\u4EF6\u52A0\u8F7D\u65F6\u6709\u6548</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"trans-jp-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'trans-jp', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"trans-jp-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u65E5\u8BED\u673A\u7FFB</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"trans-en-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'trans-en', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"trans-en-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u82F1\u8BED\u673A\u7FFB</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u5267\u60C5CSV\u6587\u4EF6\u5FEB\u6377\u4E0B\u8F7D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728 SKIP \u7684\u65F6\u5019\u81EA\u52A8\u4E0B\u8F7D\u5267\u60C5CSV</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"auto-download-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'auto-download', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"auto-download-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u81EA\u52A8\u4E0B\u8F7DCSV</label>\n\t\t\t\t\t</div>\n        </div>\n      </div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">UI\u8BBE\u7F6E</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u53EF\u4EE5\u9690\u85CFMobage\u4FA7\u8FB9\u680F\uFF08PC\u7F51\u9875\uFF09/\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F\uFF08\u624B\u673A\u6D4F\u89C8\u5668\u4E2D\uFF09</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"remove-scroller-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'remove-scroller', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"remove-scroller-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u6EDA\u52A8\u6761</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"hide-sidebar-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'hide-sidebar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"hide-sidebar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u4FA7\u8FB9\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"bottom-toolbar-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'bottom-toolbar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"bottom-toolbar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u5E95\u90E8\u5DE5\u5177\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n      <div class=\"txt-setting-lead\">\n        \u203B\u4FEE\u6539\u7684\u8BBE\u7F6E\u5728\u5237\u65B0\u9875\u9762\u540E\u751F\u6548\n      </div>\n\t\t</div>\n\t</div>\n\n\t<div class=\"prt-lead-link\">\n\t\t<div class=\"lis-lead-prev\" data-href=\"setting\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u8BBE\u7F6E</div></div>\n\t\t<div class=\"lis-lead-prev\" data-href=\"mypage\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u9996\u9875</div></div>\n\t</div>\n</div>\n</div>\n";
   function insertSettingHtml (html) {
-    return html.replace('<div class="cnt-setting">', "".concat(template, "<div class=\"cnt-setting\"><div class=\"cnt-setting\"><div class=\"btn-usual-text\" id=\"btn-setting-blhxfy\" onclick=\"window.blhxfy.setting('show')\">\u6C49\u5316\u63D2\u4EF6\u8BBE\u7F6E</div>"));
+    return html.replace('<div class="cnt-setting">', "".concat(template, "<div class=\"cnt-setting\"><div class=\"cnt-setting\"><div class=\"btn-usual-text\" id=\"btn-setting-blhxfy\" onclick=\"window.blhxfy.sendEvent('setting', 'show')\">\u6C49\u5316\u63D2\u4EF6\u8BBE\u7F6E</div>"));
   }
 
-  var extraHtml = template.replace('data-href="setting"', 'onclick="window.blhxfy.setting(\'hide\')"').replace('返回设置', '返回剧情');
-  var html$2 = "\n<style>\n#blhxfy-story-tool {\n  display: none;\n}\n#blhxfy-story-input button,\n#blhxfy-story-tool button {\n  border: none;\n  background: none;\n  cursor: pointer;\n  padding: 4px 6px;\n  font-size: 10px;\n  margin: 0;\n  letter-spacing: 1px;\n  line-height: 1;\n  outline: none;\n  position: relative;\n  transition: none;\n  border-radius: 3px;\n  background: #539cba;\n  color: #fff;\n  box-shadow: 0 3px #165c85;\n  text-shadow: 1px 1px 2px rgba(0,0,0,0.5)\n}\n\n#blhxfy-story-input button:hover,\n#blhxfy-story-tool button:hover {\n  box-shadow: 0 2px #165c85;\n  top: 1px;\n}\n#blhxfy-story-input button:active,\n#blhxfy-story-tool button:active {\n  box-shadow: 0 1px #165c85;\n  top: 2px;\n}\n.log #blhxfy-story-tool {\n  display: block;\n  position: absolute;\n  top: 33px;\n  left: 0;\n  width: 100%;\n  z-index: 9999;\n  text-align: center;\n}\n#blhxfy-story-input {\n  position: absolute;\n  display: none;\n  top: 0;\n  left: 0;\n  width: 320px;\n  height: 100%;\n  background: #fff;\n  z-index: 10000;\n}\n.blhxfy-preview-tool {\n  padding-top: 10px;\n  padding-bottom: 10px;\n  border-bottom: 1px solid #e3e3e3;\n  display: flex;\n  justify-content: space-between;\n  padding-left: 10px;\n  padding-right: 10px;\n  background: #116d82;\n}\n#blhxfy-story-input p {\n  margin: 10px 10px 0 10px;\n  color: #5b8690;\n  text-align: left;\n  font-size: 10px;\n  position: relative;\n}\n#blhxfy-story-input p a {\n  color: #29b82d;\n  position: absolute;\n  cursor: pointer;\n  padding: 4px;\n  right: 0;\n  top: -5px;\n}\n#blhxfy-story-input textarea {\n  width: 300px;\n  height: calc(100% - 80px);\n  margin: 10px;\n  box-sizing: border-box;\n  font-size: 8px;\n  padding: 4px;\n  border-radius: 2px;\n  box-shadow: inset 0 0 3px #2c88d775;\n  outline: none;\n  resize: none;\n  font-family: Consolas, \"Microsoft Yahei\";\n}\n</style>\n<div id=\"blhxfy-story-tool\">\n  <button onclick=\"window.blhxfy.dlStoryCsv()\" title=\"\u4E0B\u8F7D\u672A\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\">\u539F\u6587</button>\n  <button onclick=\"window.blhxfy.dlStoryCsv('fill')\" title=\"\u4E0B\u8F7D\u7528\u539F\u6587\u586B\u5145trans\u5217\u7684\u5267\u60C5\u6587\u672C\">\u586B\u5145</button>\n  <button onclick=\"window.blhxfy.dlStoryCsv('trans')\" title=\"\u4E0B\u8F7D\u5DF2\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\">\u8BD1\u6587</button>\n  <button onclick=\"window.blhxfy.previewCsv('show')\" title=\"\u586B\u5199\u7FFB\u8BD1\u597D\u7684\u5267\u60C5\u6587\u672C\u6765\u9884\u89C8\">\u9884\u89C8</button>\n  <button onclick=\"window.blhxfy.setting('show')\" title=\"\u63D2\u4EF6\u8BBE\u7F6E\">\u8BBE\u7F6E</button>\n</div>\n<div id=\"blhxfy-story-input\">\n  <div class=\"blhxfy-preview-tool\">\n    <button onclick=\"window.blhxfy.previewCsv('hide')\">\u53D6\u6D88</button>\n    <button onclick=\"window.blhxfy.previewCsv('save')\" title=\"\u4FDD\u5B58\u9884\u89C8\u6587\u672C\u5E76\u5237\u65B0\u9875\u9762\">\u4FDD\u5B58</button>\n  </div>\n  <p>\u8BF7\u5C06\u7F16\u8F91\u597D\u7684\u5267\u60C5\u6587\u672C\u7C98\u8D34\u5230\u6587\u672C\u6846<a onclick=\"window.blhxfy.previewCsv('clear')\" title=\"\u6E05\u9664\u9884\u89C8\u6587\u672C\">\u6E05\u7A7A</a></p>\n  <textarea placeholder=\"\u5267\u60C5\u6587\u672C\"></textarea>\n</div>\n<link type=\"text/css\" rel=\"stylesheet\" href=\"".concat(Game.cssUri, "/setting/index.css\">\n").concat(extraHtml, "\n");
+  var extraHtml = template.replace('data-href="setting"', 'onclick="window.blhxfy.sendEvent(\'setting\', \'hide\')"').replace('返回设置', '返回剧情');
+  var html$2 = "\n<style>\n.cnt-quest-scene .prt-log-display {\n  padding-top: 74px;\n}\n#blhxfy-story-tool {\n  display: none;\n}\n#blhxfy-story-tool > div {\n  width: 152px;\n  margin: 7px auto;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n#blhxfy-story-input button,\n#blhxfy-story-tool button {\n  border: none;\n  background: none;\n  cursor: pointer;\n  padding: 4px 6px;\n  font-size: 10px;\n  margin: 0;\n  letter-spacing: 1px;\n  line-height: 1;\n  outline: none;\n  position: relative;\n  transition: none;\n  border-radius: 3px;\n  background: #539cba;\n  color: #fff;\n  box-shadow: 0 3px #165c85;\n  text-shadow: 1px 1px 2px rgba(0,0,0,0.5)\n}\n\n#blhxfy-story-input button:hover,\n#blhxfy-story-tool button:hover {\n  box-shadow: 0 2px #165c85;\n  top: 1px;\n}\n#blhxfy-story-input button:active,\n#blhxfy-story-tool button:active {\n  box-shadow: 0 1px #165c85;\n  top: 2px;\n}\n.log #blhxfy-story-tool {\n  display: block;\n  position: absolute;\n  top: 26px;\n  left: 0;\n  width: 100%;\n  z-index: 9999;\n  text-align: center;\n}\n#blhxfy-story-input {\n  position: absolute;\n  display: none;\n  top: 0;\n  left: 0;\n  width: 320px;\n  height: 100%;\n  background: #fff;\n  z-index: 10000;\n}\n.blhxfy-preview-tool {\n  padding-top: 10px;\n  padding-bottom: 10px;\n  border-bottom: 1px solid #e3e3e3;\n  display: flex;\n  justify-content: space-between;\n  padding-left: 10px;\n  padding-right: 10px;\n  background: #116d82;\n}\n#blhxfy-story-input p {\n  margin: 10px 10px 0 10px;\n  color: #5b8690;\n  text-align: left;\n  font-size: 10px;\n  position: relative;\n}\n#blhxfy-story-input p a {\n  color: #29b82d;\n  position: absolute;\n  cursor: pointer;\n  padding: 4px;\n  right: 0;\n  top: -5px;\n}\n#blhxfy-story-input textarea {\n  width: 300px;\n  height: calc(100% - 80px);\n  margin: 10px;\n  box-sizing: border-box;\n  font-size: 8px;\n  padding: 4px;\n  border-radius: 2px;\n  box-shadow: inset 0 0 3px #2c88d775;\n  outline: none;\n  resize: none;\n  font-family: Consolas, \"Microsoft Yahei\";\n}\n.language-setting-blhxfy {\n  font-size: 10px;\n  color: #fff;\n  top: 1px;\n  position: relative;\n  font-family: Microsoft Jhenghei;\n}\n.language-setting-blhxfy select {\n  border: none;\n    border-radius: 2px;\n}\n</style>\n<div id=\"blhxfy-story-tool\">\n  <div>\n    <button onclick=\"window.blhxfy.sendEvent('dlStoryCsv')\" title=\"\u4E0B\u8F7D\u672A\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\">\u539F\u6587</button>\n    <button onclick=\"window.blhxfy.sendEvent('dlStoryCsv', 'fill')\" title=\"\u4E0B\u8F7D\u7528\u539F\u6587\u586B\u5145trans\u5217\u7684\u5267\u60C5\u6587\u672C\">\u586B\u5145</button>\n    <button onclick=\"window.blhxfy.sendEvent('dlStoryCsv', 'trans')\" title=\"\u4E0B\u8F7D\u5DF2\u7FFB\u8BD1\u7684\u5267\u60C5\u6587\u672C\">\u8BD1\u6587</button>\n    <button onclick=\"window.blhxfy.sendEvent('previewCsv', 'show')\" title=\"\u586B\u5199\u7FFB\u8BD1\u597D\u7684\u5267\u60C5\u6587\u672C\u6765\u9884\u89C8\">\u9884\u89C8</button>\n  </div>\n  <div>\n    <div class=\"language-setting-blhxfy\">\n      <span>\u8BED\u8A00\uFF1A</span>\n      <select id=\"language-type-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'language', event)\" class=\"frm-list-select frm-post-async is-reload\" data-post-name=\"language_type\">\n        <option value=\"1\">\u65E5\u672C\u8A9E</option>\n        <option value=\"2\">English</option>\n      </select>\n    </div>\n    <button onclick=\"window.blhxfy.sendEvent('setting', 'show')\" title=\"\u63D2\u4EF6\u8BBE\u7F6E\">\u8BBE\u7F6E</button>\n  </div>\n</div>\n<div id=\"blhxfy-story-input\">\n  <div class=\"blhxfy-preview-tool\">\n    <button onclick=\"window.blhxfy.sendEvent('previewCsv', 'hide')\">\u53D6\u6D88</button>\n    <button onclick=\"window.blhxfy.sendEvent('previewCsv', 'save')\" title=\"\u4FDD\u5B58\u9884\u89C8\u6587\u672C\u5E76\u5237\u65B0\u9875\u9762\">\u4FDD\u5B58</button>\n  </div>\n  <p>\u8BF7\u5C06\u7F16\u8F91\u597D\u7684\u5267\u60C5\u6587\u672C\u7C98\u8D34\u5230\u6587\u672C\u6846<a onclick=\"window.blhxfy.sendEvent('previewCsv', 'clear')\" title=\"\u6E05\u9664\u9884\u89C8\u6587\u672C\">\u6E05\u7A7A</a></p>\n  <textarea placeholder=\"\u5267\u60C5\u6587\u672C\"></textarea>\n</div>\n<link type=\"text/css\" rel=\"stylesheet\" href=\"".concat(Game.cssUri, "/setting/index.css\">\n").concat(extraHtml, "\n");
   function insertToolHtml () {
     var cont = $('.cnt-quest-scene');
     var tool = $('#blhxfy-story-tool');
@@ -10506,6 +10586,11 @@
 
     if (cont[0]) {
       cont.prepend(html$2);
+      var langVal = {
+        ja: 1,
+        en: 2
+      };
+      $('#language-type-blhxfy').val(langVal[Game.lang]);
     }
   }
 
@@ -12827,7 +12912,420 @@
 
   var cloneDeep_1 = cloneDeep;
 
+  var CROSS_DOMAIN_REQ = !!window.GM_xmlhttpRequest;
+
+  var request = function request(url, option) {
+    var _option$method = option.method,
+        method = _option$method === void 0 ? 'GET' : _option$method,
+        headers = option.headers,
+        _option$responseType = option.responseType,
+        responseType = _option$responseType === void 0 ? 'json' : _option$responseType,
+        data = option.data;
+    return new Promise(function (rev, rej) {
+      if (!CROSS_DOMAIN_REQ) return rej('need tampermonkey to send request');
+      window.GM_xmlhttpRequest({
+        method: method,
+        url: url,
+        headers: headers,
+        responseType: responseType,
+        data: data,
+        onload: function onload(_ref) {
+          var status = _ref.status,
+              responseText = _ref.responseText,
+              statusText = _ref.statusText;
+
+          if (status >= 200 && status < 300) {
+            if (responseType === 'json') {
+              var obj = JSON.parse(responseText);
+              rev(obj);
+            } else {
+              rev(responseText);
+            }
+          } else {
+            rej(statusText);
+          }
+        },
+        onerror: function onerror(err) {
+          rej(err);
+        }
+      });
+    });
+  };
+
+  var urlSearchParams_node = createCommonjsModule(function (module) {
+
+  function URLSearchParams(query) {
+    var
+      index, key, value,
+      pairs, i, length,
+      dict = Object.create(null)
+    ;
+    this[secret] = dict;
+    if (!query) return;
+    if (typeof query === 'string') {
+      if (query.charAt(0) === '?') {
+        query = query.slice(1);
+      }
+      for (
+        pairs = query.split('&'),
+        i = 0,
+        length = pairs.length; i < length; i++
+      ) {
+        value = pairs[i];
+        index = value.indexOf('=');
+        if (-1 < index) {
+          appendTo(
+            dict,
+            decode(value.slice(0, index)),
+            decode(value.slice(index + 1))
+          );
+        } else if (value.length){
+          appendTo(
+            dict,
+            decode(value),
+            ''
+          );
+        }
+      }
+    } else {
+      if (isArray(query)) {
+        for (
+          i = 0,
+          length = query.length; i < length; i++
+        ) {
+          value = query[i];
+          appendTo(dict, value[0], value[1]);
+        }
+      } else if (query.forEach) {
+        query.forEach(addEach, dict);
+      } else {
+        for (key in query) {
+           appendTo(dict, key, query[key]);
+        }
+      }
+    }
+  }
+
+  var
+    isArray = Array.isArray,
+    URLSearchParamsProto = URLSearchParams.prototype,
+    find = /[!'\(\)~]|%20|%00/g,
+    plus = /\+/g,
+    replace = {
+      '!': '%21',
+      "'": '%27',
+      '(': '%28',
+      ')': '%29',
+      '~': '%7E',
+      '%20': '+',
+      '%00': '\x00'
+    },
+    replacer = function (match) {
+      return replace[match];
+    },
+    secret = '__URLSearchParams__:' + Math.random()
+  ;
+
+  function addEach(value, key) {
+    /* jshint validthis:true */
+    appendTo(this, key, value);
+  }
+
+  function appendTo(dict, name, value) {
+    var res = isArray(value) ? value.join(',') : value;
+    if (name in dict)
+      dict[name].push(res);
+    else
+      dict[name] = [res];
+  }
+
+  function decode(str) {
+    return decodeURIComponent(str.replace(plus, ' '));
+  }
+
+  function encode(str) {
+    return encodeURIComponent(str).replace(find, replacer);
+  }
+
+  URLSearchParamsProto.append = function append(name, value) {
+    appendTo(this[secret], name, value);
+  };
+
+  URLSearchParamsProto.delete = function del(name) {
+    delete this[secret][name];
+  };
+
+  URLSearchParamsProto.get = function get(name) {
+    var dict = this[secret];
+    return name in dict ? dict[name][0] : null;
+  };
+
+  URLSearchParamsProto.getAll = function getAll(name) {
+    var dict = this[secret];
+    return name in dict ? dict[name].slice(0) : [];
+  };
+
+  URLSearchParamsProto.has = function has(name) {
+    return name in this[secret];
+  };
+
+  URLSearchParamsProto.set = function set(name, value) {
+    this[secret][name] = ['' + value];
+  };
+
+  URLSearchParamsProto.forEach = function forEach(callback, thisArg) {
+    var dict = this[secret];
+    Object.getOwnPropertyNames(dict).forEach(function(name) {
+      dict[name].forEach(function(value) {
+        callback.call(thisArg, value, name, this);
+      }, this);
+    }, this);
+  };
+
+  /*
+  URLSearchParamsProto.toBody = function() {
+    return new Blob(
+      [this.toString()],
+      {type: 'application/x-www-form-urlencoded'}
+    );
+  };
+  */
+
+  URLSearchParamsProto.toJSON = function toJSON() {
+    return {};
+  };
+
+  URLSearchParamsProto.toString = function toString() {
+    var dict = this[secret], query = [], i, key, name, value;
+    for (key in dict) {
+      name = encode(key);
+      for (
+        i = 0,
+        value = dict[key];
+        i < value.length; i++
+      ) {
+        query.push(name + '=' + encode(value[i]));
+      }
+    }
+    return query.join('&');
+  };
+
+  URLSearchParams = (module.exports = commonjsGlobal.URLSearchParams || URLSearchParams);
+
+  (function (URLSearchParamsProto) {
+
+    var iterable = (function () {
+      try {
+        return !!Symbol.iterator;
+      } catch(error) {
+        return false;
+      }
+    }());
+
+    // mostly related to issue #24
+    if (!('forEach' in URLSearchParamsProto)) {
+      URLSearchParamsProto.forEach = function forEach(callback, thisArg) {
+        var names = Object.create(null);
+        this.toString()
+            .replace(/=[\s\S]*?(?:&|$)/g, '=')
+            .split('=')
+            .forEach(function (name) {
+              if (!name.length || name in names) return;
+              (names[name] = this.getAll(name)).forEach(function(value) {
+                callback.call(thisArg, value, name, this);
+              }, this);
+            }, this);
+      };
+    }
+
+    if (!('keys' in URLSearchParamsProto)) {
+      URLSearchParamsProto.keys = function keys() {
+        var items = [];
+        this.forEach(function(value, name) { items.push(name); });
+        var iterator = {
+          next: function() {
+            var value = items.shift();
+            return {done: value === undefined, value: value};
+          }
+        };
+
+        if (iterable) {
+          iterator[Symbol.iterator] = function() {
+            return iterator;
+          };
+        }
+
+        return iterator;
+      };
+    }
+
+    if (!('values' in URLSearchParamsProto)) {
+      URLSearchParamsProto.values = function values() {
+        var items = [];
+        this.forEach(function(value) { items.push(value); });
+        var iterator = {
+          next: function() {
+            var value = items.shift();
+            return {done: value === undefined, value: value};
+          }
+        };
+
+        if (iterable) {
+          iterator[Symbol.iterator] = function() {
+            return iterator;
+          };
+        }
+
+        return iterator;
+      };
+    }
+
+    if (!('entries' in URLSearchParamsProto)) {
+      URLSearchParamsProto.entries = function entries() {
+        var items = [];
+        this.forEach(function(value, name) { items.push([name, value]); });
+        var iterator = {
+          next: function() {
+            var value = items.shift();
+            return {done: value === undefined, value: value};
+          }
+        };
+
+        if (iterable) {
+          iterator[Symbol.iterator] = function() {
+            return iterator;
+          };
+        }
+
+        return iterator;
+      };
+    }
+
+    if (iterable && !(Symbol.iterator in URLSearchParamsProto)) {
+      URLSearchParamsProto[Symbol.iterator] = URLSearchParamsProto.entries;
+    }
+
+    if (!('sort' in URLSearchParamsProto)) {
+      URLSearchParamsProto.sort = function sort() {
+        var
+          entries = this.entries(),
+          entry = entries.next(),
+          done = entry.done,
+          keys = [],
+          values = Object.create(null),
+          i, key, value
+        ;
+        while (!done) {
+          value = entry.value;
+          key = value[0];
+          keys.push(key);
+          if (!(key in values)) {
+            values[key] = [];
+          }
+          values[key].push(value[1]);
+          entry = entries.next();
+          done = entry.done;
+        }
+        // not the champion in efficiency
+        // but these two bits just do the job
+        keys.sort();
+        for (i = 0; i < keys.length; i++) {
+          this.delete(keys[i]);
+        }
+        for (i = 0; i < keys.length; i++) {
+          key = keys[i];
+          this.append(key, values[key].shift());
+        }
+      };
+    }
+
+  }(URLSearchParams.prototype));
+  });
+
+  var getTransResult = function getTransResult(data) {
+    if (data[0] && data[0].length) {
+      var result = data[0].map(function (item) {
+        return item[0];
+      }).join('');
+      return result;
+    }
+
+    return '';
+  };
+
+  var googleTrans =
+  /*#__PURE__*/
+  function () {
+    var _ref = _asyncToGenerator(
+    /*#__PURE__*/
+    regeneratorRuntime.mark(function _callee(keyword) {
+      var lang,
+          to,
+          query,
+          data,
+          res,
+          txt,
+          _args = arguments;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              lang = _args.length > 1 && _args[1] !== undefined ? _args[1] : 'en';
+              to = _args.length > 2 && _args[2] !== undefined ? _args[2] : 'zh-CN';
+              query = new urlSearchParams_node({
+                client: 'gtx',
+                sl: lang,
+                tl: to,
+                hl: 'zh-CN',
+                ie: 'UTF-8',
+                oe: 'UTF-8'
+              });
+              query = query.toString();
+              ['at', 'bd', 'ex', 'ld', 'md', 'qca', 'rw', 'rm', 'ss', 't'].forEach(function (item) {
+                query += "&dt=".concat(item);
+              });
+              data = new urlSearchParams_node({
+                q: keyword
+              });
+              _context.prev = 6;
+              _context.next = 9;
+              return request("https://translate.google.cn/translate_a/single?".concat(query), {
+                data: data.toString(),
+                method: 'POST',
+                headers: {
+                  'accept': '*/*',
+                  'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                  'referer': 'https://translate.google.cn',
+                  'origin': 'https://translate.google.cn'
+                }
+              });
+
+            case 9:
+              res = _context.sent;
+              txt = getTransResult(res);
+              return _context.abrupt("return", txt);
+
+            case 14:
+              _context.prev = 14;
+              _context.t0 = _context["catch"](6);
+              console.error("".concat(_context.t0.message, "\n").concat(_context.t0.stack));
+              return _context.abrupt("return", '');
+
+            case 18:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this, [[6, 14]]);
+    }));
+
+    return function googleTrans(_x) {
+      return _ref.apply(this, arguments);
+    };
+  }();
+
   var txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+  var WORDS_LIMIT = 4500;
   var scenarioCache = {
     data: null,
     name: '',
@@ -12848,48 +13346,180 @@
     return pathname;
   };
 
-  var getScenario =
+  var collectTxt = function collectTxt(data) {
+    var txtList = [];
+    var infoList = [];
+
+    var getTxt = function getTxt(obj, key) {
+      var txt = obj[key];
+
+      if (txt) {
+        txtList.push(txt.replace(/\n/g, '').trim());
+        infoList.push({
+          id: obj.id,
+          type: key
+        });
+      }
+    };
+
+    data.forEach(function (item) {
+      txtKeys.forEach(function (key) {
+        return getTxt(item, key);
+      });
+    });
+    return {
+      txtList: txtList,
+      infoList: infoList
+    };
+  };
+
+  var transMulti =
   /*#__PURE__*/
   function () {
     var _ref = _asyncToGenerator(
     /*#__PURE__*/
-    regeneratorRuntime.mark(function _callee(name) {
-      var csv, scenarioData, pathname, list, transMap;
+    regeneratorRuntime.mark(function _callee(list, nameMap, nounMap, nounFixMap) {
+      var count, strTemp, txtStr, userName, lang, transStr;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
+              count = 0;
+              strTemp = '';
+              txtStr = [];
+              userName = config.userName;
+              lang = Game.lang;
+              list.forEach(function (txt) {
+                strTemp += txt;
+                count += new Blob([txt]).size;
+
+                if (count > WORDS_LIMIT) {
+                  txtStr.push(strTemp);
+                  count = 0;
+                  strTemp = '';
+                } else {
+                  strTemp += '\n';
+                }
+              });
+
+              if (strTemp) {
+                txtStr.push(strTemp);
+              }
+
+              _context.next = 9;
+              return Promise.all(txtStr.map(function (txt) {
+                txt = removeHtmlTag(txt);
+                txt = replaceWords(txt, nameMap, lang);
+                txt = replaceWords(txt, nounMap, lang);
+
+                if (userName && lang === 'en') {
+                  var _lang = lang;
+                  if (!/^\w+$/.test(userName)) _lang = 'unknown';
+                  txt = replaceWords(txt, new Map([[userName, config.defaultName]]), _lang);
+                }
+
+                var targetLang = config.lang !== 'hant' ? 'zh-CN' : 'zh-TW';
+                return googleTrans(txt, lang, targetLang);
+              }));
+
+            case 9:
+              transStr = _context.sent;
+              return _context.abrupt("return", transStr.reduce(function (result, str) {
+                var _str = str;
+
+                if (str) {
+                  if (userName) {
+                    _str = _str.replace(new RegExp(config.defaultName, 'g'), userName);
+                  }
+
+                  var _iteratorNormalCompletion = true;
+                  var _didIteratorError = false;
+                  var _iteratorError = undefined;
+
+                  try {
+                    for (var _iterator = nounFixMap[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                      var _step$value = _slicedToArray(_step.value, 2),
+                          text = _step$value[0],
+                          fix = _step$value[1];
+
+                      _str = _str.replace(new RegExp(text, 'g'), fix);
+                    }
+                  } catch (err) {
+                    _didIteratorError = true;
+                    _iteratorError = err;
+                  } finally {
+                    try {
+                      if (!_iteratorNormalCompletion && _iterator.return != null) {
+                        _iterator.return();
+                      }
+                    } finally {
+                      if (_didIteratorError) {
+                        throw _iteratorError;
+                      }
+                    }
+                  }
+
+                  return result.concat(_str.split('\n'));
+                }
+
+                return result;
+              }, []));
+
+            case 11:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+
+    return function transMulti(_x, _x2, _x3, _x4) {
+      return _ref.apply(this, arguments);
+    };
+  }();
+
+  var getScenario =
+  /*#__PURE__*/
+  function () {
+    var _ref2 = _asyncToGenerator(
+    /*#__PURE__*/
+    regeneratorRuntime.mark(function _callee2(name) {
+      var csv, scenarioData, pathname, list, transMap;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
               csv = getPreviewCsv(name);
 
               if (csv) {
-                _context.next = 12;
+                _context2.next = 12;
                 break;
               }
 
-              _context.next = 4;
+              _context2.next = 4;
               return fetchWithHash('/blhxfy/data/scenario.json');
 
             case 4:
-              scenarioData = _context.sent;
+              scenarioData = _context2.sent;
               pathname = scenarioData[name];
 
               if (pathname) {
-                _context.next = 8;
+                _context2.next = 8;
                 break;
               }
 
-              return _context.abrupt("return", {
+              return _context2.abrupt("return", {
                 transMap: null,
                 csv: ''
               });
 
             case 8:
               scenarioCache.originName = getFilename(pathname);
-              _context.next = 11;
+              _context2.next = 11;
               return fetchWithHash("/blhxfy/data/scenario/".concat(pathname));
 
             case 11:
-              csv = _context.sent;
+              csv = _context2.sent;
 
             case 12:
               list = parseCsv(csv);
@@ -12900,26 +13530,26 @@
                   var id = idArr[0];
                   var type = idArr[1] || 'detail';
                   var obj = transMap.get(id) || {};
-                  obj[type] = item.trans ? filter(item.trans.replace(/姬塔/g, config.displayName || config.userName)) : false;
+                  obj[type] = item.trans ? filter(item.trans.replace(new RegExp(config.defaultName, 'g'), config.displayName || config.userName)) : false;
                   obj["".concat(type, "-origin")] = item.trans;
                   transMap.set(id, obj);
                 }
               });
-              return _context.abrupt("return", {
+              return _context2.abrupt("return", {
                 transMap: transMap,
                 csv: csv
               });
 
             case 16:
             case "end":
-              return _context.stop();
+              return _context2.stop();
           }
         }
-      }, _callee, this);
+      }, _callee2, this);
     }));
 
-    return function getScenario(_x) {
-      return _ref.apply(this, arguments);
+    return function getScenario(_x5) {
+      return _ref2.apply(this, arguments);
     };
   }();
 
@@ -12930,13 +13560,13 @@
       var existScenario = '';
 
       if (item.scenarios.length) {
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
 
         try {
-          for (var _iterator = item.scenarios[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var sName = _step.value;
+          for (var _iterator2 = item.scenarios[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var sName = _step2.value;
 
             if (scenarioName.indexOf(sName) !== -1) {
               existScenario = sName;
@@ -12944,16 +13574,16 @@
             }
           }
         } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
+          _didIteratorError2 = true;
+          _iteratorError2 = err;
         } finally {
           try {
-            if (!_iteratorNormalCompletion && _iterator.return != null) {
-              _iterator.return();
+            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+              _iterator2.return();
             }
           } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
+            if (_didIteratorError2) {
+              throw _iteratorError2;
             }
           }
         }
@@ -13040,40 +13670,40 @@
   var transStart =
   /*#__PURE__*/
   function () {
-    var _ref2 = _asyncToGenerator(
+    var _ref3 = _asyncToGenerator(
     /*#__PURE__*/
-    regeneratorRuntime.mark(function _callee2(data, pathname) {
-      var pathRst, sNameTemp, rst, scenarioName, _ref3, transMap, csv, nameData, nameMap;
+    regeneratorRuntime.mark(function _callee3(data, pathname) {
+      var pathRst, sNameTemp, rst, scenarioName, _ref4, transMap, csv, nameData, nameMap, _ref5, nounMap, nounFixMap, _collectTxt, txtList, infoList, transList;
 
-      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
-          switch (_context2.prev = _context2.next) {
+          switch (_context3.prev = _context3.next) {
             case 0:
               pathRst = pathname.match(/\/[^/]*?scenario.*?\/(scene[^\/]+)\/?/);
 
               if (!(!pathRst || !pathRst[1])) {
-                _context2.next = 3;
+                _context3.next = 3;
                 break;
               }
 
-              return _context2.abrupt("return", data);
+              return _context3.abrupt("return", data);
 
             case 3:
               sNameTemp = pathRst[1];
 
               if (!(pathRst[1].includes('birthday') || pathname.includes('season_event'))) {
-                _context2.next = 9;
+                _context3.next = 9;
                 break;
               }
 
               rst = pathname.match(/\/[^/]*?scenario.*?\/(scene.+)$/);
 
               if (!(!rst || !rst[1])) {
-                _context2.next = 8;
+                _context3.next = 8;
                 break;
               }
 
-              return _context2.abrupt("return", data);
+              return _context3.abrupt("return", data);
 
             case 8:
               sNameTemp = rst[1].replace(/\//g, '_');
@@ -13086,32 +13716,66 @@
               scenarioCache.name = scenarioName;
               scenarioCache.hasTrans = false;
               scenarioCache.originName = '';
-              _context2.next = 18;
+              _context3.next = 18;
               return getScenario(scenarioName);
 
             case 18:
-              _ref3 = _context2.sent;
-              transMap = _ref3.transMap;
-              csv = _ref3.csv;
-              _context2.next = 23;
+              _ref4 = _context3.sent;
+              transMap = _ref4.transMap;
+              csv = _ref4.csv;
+              _context3.next = 23;
               return getNameData();
 
             case 23:
-              nameData = _context2.sent;
+              nameData = _context3.sent;
               nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
               scenarioCache.nameMap = nameMap;
 
               if (transMap) {
-                _context2.next = 28;
+                _context3.next = 44;
                 break;
               }
 
-              return _context2.abrupt("return", data);
+              if (!(config.transJp && Game.lang === 'ja' || config.transEn && Game.lang === 'en')) {
+                _context3.next = 41;
+                break;
+              }
 
-            case 28:
+              _context3.next = 30;
+              return getNounData();
+
+            case 30:
+              _ref5 = _context3.sent;
+              nounMap = _ref5.nounMap;
+              nounFixMap = _ref5.nounFixMap;
+              transMap = new Map();
+              _collectTxt = collectTxt(data), txtList = _collectTxt.txtList, infoList = _collectTxt.infoList;
+              _context3.next = 37;
+              return transMulti(txtList, nameMap, nounMap, nounFixMap);
+
+            case 37:
+              transList = _context3.sent;
+              infoList.forEach(function (info, index) {
+                var obj = transMap.get(info.id) || {};
+                obj[info.type] = transList[index] || '';
+                transMap.set(info.id, obj);
+              });
+              _context3.next = 42;
+              break;
+
+            case 41:
+              return _context3.abrupt("return", data);
+
+            case 42:
+              _context3.next = 47;
+              break;
+
+            case 44:
               scenarioCache.hasTrans = true;
               scenarioCache.csv = csv;
               scenarioCache.transMap = transMap;
+
+            case 47:
               data.forEach(function (item) {
                 var name1, name2, name3;
                 name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -13125,91 +13789,91 @@
                   }
                 });
               });
-              return _context2.abrupt("return", data);
-
-            case 33:
-            case "end":
-              return _context2.stop();
-          }
-        }
-      }, _callee2, this);
-    }));
-
-    return function transStart(_x2, _x3) {
-      return _ref2.apply(this, arguments);
-    };
-  }();
-
-  function transScenario (_x4, _x5) {
-    return _ref4.apply(this, arguments);
-  }
-
-  function _ref4() {
-    _ref4 = _asyncToGenerator(
-    /*#__PURE__*/
-    regeneratorRuntime.mark(function _callee3(data, pathname) {
-      return regeneratorRuntime.wrap(function _callee3$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              if (!Array.isArray(data)) {
-                _context3.next = 6;
-                break;
-              }
-
-              _context3.next = 3;
-              return transStart(data, pathname);
-
-            case 3:
-              return _context3.abrupt("return", _context3.sent);
-
-            case 6:
-              if (!Array.isArray(data.scene_list)) {
-                _context3.next = 16;
-                break;
-              }
-
-              _context3.t0 = Object;
-              _context3.t1 = data;
-              _context3.next = 11;
-              return transStart(data.scene_list, pathname);
-
-            case 11:
-              _context3.t2 = _context3.sent;
-              _context3.t3 = {
-                scene_list: _context3.t2
-              };
-              return _context3.abrupt("return", _context3.t0.assign.call(_context3.t0, _context3.t1, _context3.t3));
-
-            case 16:
-              if (!Array.isArray(data.scenario)) {
-                _context3.next = 26;
-                break;
-              }
-
-              _context3.t4 = Object;
-              _context3.t5 = data;
-              _context3.next = 21;
-              return transStart(data.scenario, pathname);
-
-            case 21:
-              _context3.t6 = _context3.sent;
-              _context3.t7 = {
-                scenario: _context3.t6
-              };
-              return _context3.abrupt("return", _context3.t4.assign.call(_context3.t4, _context3.t5, _context3.t7));
-
-            case 26:
               return _context3.abrupt("return", data);
 
-            case 27:
+            case 49:
             case "end":
               return _context3.stop();
           }
         }
       }, _callee3, this);
     }));
-    return _ref4.apply(this, arguments);
+
+    return function transStart(_x6, _x7) {
+      return _ref3.apply(this, arguments);
+    };
+  }();
+
+  function transScenario (_x8, _x9) {
+    return _ref6.apply(this, arguments);
+  }
+
+  function _ref6() {
+    _ref6 = _asyncToGenerator(
+    /*#__PURE__*/
+    regeneratorRuntime.mark(function _callee4(data, pathname) {
+      return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        while (1) {
+          switch (_context4.prev = _context4.next) {
+            case 0:
+              if (!Array.isArray(data)) {
+                _context4.next = 6;
+                break;
+              }
+
+              _context4.next = 3;
+              return transStart(data, pathname);
+
+            case 3:
+              return _context4.abrupt("return", _context4.sent);
+
+            case 6:
+              if (!Array.isArray(data.scene_list)) {
+                _context4.next = 16;
+                break;
+              }
+
+              _context4.t0 = Object;
+              _context4.t1 = data;
+              _context4.next = 11;
+              return transStart(data.scene_list, pathname);
+
+            case 11:
+              _context4.t2 = _context4.sent;
+              _context4.t3 = {
+                scene_list: _context4.t2
+              };
+              return _context4.abrupt("return", _context4.t0.assign.call(_context4.t0, _context4.t1, _context4.t3));
+
+            case 16:
+              if (!Array.isArray(data.scenario)) {
+                _context4.next = 26;
+                break;
+              }
+
+              _context4.t4 = Object;
+              _context4.t5 = data;
+              _context4.next = 21;
+              return transStart(data.scenario, pathname);
+
+            case 21:
+              _context4.t6 = _context4.sent;
+              _context4.t7 = {
+                scenario: _context4.t6
+              };
+              return _context4.abrupt("return", _context4.t4.assign.call(_context4.t4, _context4.t5, _context4.t7));
+
+            case 26:
+              return _context4.abrupt("return", data);
+
+            case 27:
+            case "end":
+              return _context4.stop();
+          }
+        }
+      }, _callee4, this);
+    }));
+    return _ref6.apply(this, arguments);
   }
 
   // most Object methods by ES6 should accept primitives
@@ -16244,146 +16908,6 @@
     };
   };
 
-  var txtKeys$1 = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
-
-  var replaceName = function replaceName(content, userName) {
-    if (userName) {
-      content.forEach(function (item) {
-        if (item.id === 'info') return;
-        ['name', 'text', 'trans'].forEach(function (key) {
-          if (!item[key]) return;
-          var _lang = Game.lang;
-          if (!/^\w+$/.test(userName)) _lang = 'unknown';
-          item[key] = replaceWords(item[key], new Map([[userName, '姬塔']]), _lang);
-        });
-      });
-    }
-  };
-
-  var dataToCsv = function dataToCsv(data, fill, isTrans) {
-    var result = [];
-    data.forEach(function (item) {
-      var name = removeTag(item.charcter1_name);
-      replaceChar('charcter1_name', item, scenarioCache.nameMap, scenarioCache.name);
-      var transName = removeTag(item.charcter1_name);
-      var hasTransName = name !== transName;
-      txtKeys$1.forEach(function (key) {
-        var txt = item[key];
-        var hasName = key === 'detail' && name && name !== 'null';
-
-        if (txt) {
-          txt = txt.replace(/\n/g, '');
-          var trans = '';
-
-          if (isTrans) {
-            var obj = scenarioCache.transMap.get(item.id);
-
-            if (obj && obj["".concat(key, "-origin")]) {
-              trans = obj["".concat(key, "-origin")];
-            }
-          } else if (fill) {
-            trans = txt;
-          }
-
-          result.push({
-            id: "".concat(item.id).concat(key === 'detail' ? '' : '-' + key),
-            name: hasName ? "".concat(name).concat(hasTransName ? '/' + transName : '') : '',
-            text: txt,
-            trans: trans
-          });
-        }
-      });
-    });
-    var extraInfo = {
-      id: 'info',
-      name: '',
-      text: '',
-      trans: scenarioCache.name
-    };
-    replaceName(result, config.userName);
-    result.push(extraInfo);
-    return papaparse.unparse(result);
-  };
-
-  function dlStoryCsv () {
-    var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'normal';
-
-    if (type === 'normal') {
-      tryDownload(dataToCsv(scenarioCache.data), scenarioCache.name + '.csv');
-    } else if (type === 'trans') {
-      if (scenarioCache.hasTrans) {
-        tryDownload(dataToCsv(scenarioCache.data, false, true), scenarioCache.originName);
-      } else {
-        alert('这个章节还没有翻译。');
-      }
-    } else if (type === 'fill') {
-      tryDownload(dataToCsv(scenarioCache.data, true), scenarioCache.name + '.csv');
-    }
-  }
-
-  var setLocalData$1 = function setLocalData(name, csv) {
-    var data = getPreview();
-    var exist = false;
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
-
-    try {
-      for (var _iterator = data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var item = _step.value;
-
-        if (item.name === name) {
-          exist = true;
-          item.csv = csv;
-          break;
-        }
-      }
-    } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion && _iterator.return != null) {
-          _iterator.return();
-        }
-      } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
-        }
-      }
-    }
-
-    if (!exist) {
-      if (data.length >= 5) {
-        data.shift();
-      }
-
-      data.push({
-        name: name,
-        csv: csv
-      });
-    }
-
-    sessionStorage.setItem('blhxfy:preview', JSON.stringify(data));
-  };
-
-  function previewCsv (type) {
-    var cont = document.getElementById('blhxfy-story-input');
-
-    if (type === 'hide') {
-      cont.style.display = 'none';
-    } else if (type === 'show') {
-      var csv = getPreviewCsv(scenarioCache.name);
-      cont.querySelector('textarea').value = csv;
-      cont.style.display = 'block';
-    } else if (type === 'clear') {
-      cont.querySelector('textarea').value = '';
-    } else if (type === 'save') {
-      setLocalData$1(scenarioCache.name, cont.querySelector('textarea').value);
-      location.reload();
-    }
-  }
-
   var addToolbar = function addToolbar() {
     if (config.bottomToolbar) {
       document.addEventListener('DOMContentLoaded', function () {
@@ -16738,7 +17262,7 @@
     localStorage.setItem('blhxfy:setting', JSON.stringify(data));
   };
 
-  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar']]);
+  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar'], ['trans-jp', 'transJp'], ['trans-en', 'transEn']]);
 
   var setting = function setting(type, value) {
     if (type === 'show') {
@@ -16778,6 +17302,12 @@
       $('#blhxfy-setting-modal').addClass('show');
     } else if (type === 'hide') {
       $('#blhxfy-setting-modal').removeClass('show');
+    } else if (type === 'language') {
+      require(['view/setting/index'], function (sett) {
+        sett.prototype.onChangePostAsyncInput({
+          currentTarget: value.target
+        });
+      });
     } else {
       saveToLocalstorage(keyMap.get(type), value);
     }
@@ -16785,14 +17315,172 @@
 
   var dbSetting = debounce_1(setting, 500);
 
+  var txtKeys$1 = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+
+  var replaceName = function replaceName(content, userName) {
+    if (userName) {
+      content.forEach(function (item) {
+        if (item.id === 'info') return;
+        ['name', 'text', 'trans'].forEach(function (key) {
+          if (!item[key]) return;
+          var _lang = Game.lang;
+          if (!/^\w+$/.test(userName)) _lang = 'unknown';
+          item[key] = replaceWords(item[key], new Map([[userName, '姬塔']]), _lang);
+        });
+      });
+    }
+  };
+
+  var dataToCsv = function dataToCsv(data, fill, isTrans) {
+    var result = [];
+    data.forEach(function (item) {
+      var name = removeTag(item.charcter1_name);
+      replaceChar('charcter1_name', item, scenarioCache.nameMap, scenarioCache.name);
+      var transName = removeTag(item.charcter1_name);
+      var hasTransName = name !== transName;
+      txtKeys$1.forEach(function (key) {
+        var txt = item[key];
+        var hasName = key === 'detail' && name && name !== 'null';
+
+        if (txt) {
+          txt = txt.replace(/\n/g, '');
+          var trans = '';
+
+          if (isTrans) {
+            var obj = scenarioCache.transMap.get(item.id);
+
+            if (obj && obj["".concat(key, "-origin")]) {
+              trans = obj["".concat(key, "-origin")];
+            }
+          } else if (fill) {
+            trans = txt;
+          }
+
+          result.push({
+            id: "".concat(item.id).concat(key === 'detail' ? '' : '-' + key),
+            name: hasName ? "".concat(name).concat(hasTransName ? '/' + transName : '') : '',
+            text: txt,
+            trans: trans
+          });
+        }
+      });
+    });
+    var extraInfo = {
+      id: 'info',
+      name: '',
+      text: '',
+      trans: scenarioCache.name
+    };
+    replaceName(result, config.userName);
+    result.push(extraInfo);
+    return papaparse.unparse(result);
+  };
+
+  function dlStoryCsv () {
+    var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'normal';
+
+    if (type === 'normal') {
+      tryDownload(dataToCsv(scenarioCache.data), scenarioCache.name + '.csv');
+    } else if (type === 'trans') {
+      if (scenarioCache.hasTrans) {
+        tryDownload(dataToCsv(scenarioCache.data, false, true), scenarioCache.originName);
+      } else {
+        alert('这个章节还没有翻译。');
+      }
+    } else if (type === 'fill') {
+      tryDownload(dataToCsv(scenarioCache.data, true), scenarioCache.name + '.csv');
+    }
+  }
+
+  var setLocalData$1 = function setLocalData(name, csv) {
+    var data = getPreview();
+    var exist = false;
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var item = _step.value;
+
+        if (item.name === name) {
+          exist = true;
+          item.csv = csv;
+          break;
+        }
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return != null) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    if (!exist) {
+      if (data.length >= 5) {
+        data.shift();
+      }
+
+      data.push({
+        name: name,
+        csv: csv
+      });
+    }
+
+    sessionStorage.setItem('blhxfy:preview', JSON.stringify(data));
+  };
+
+  function previewCsv (type) {
+    var cont = document.getElementById('blhxfy-story-input');
+
+    if (type === 'hide') {
+      cont.style.display = 'none';
+    } else if (type === 'show') {
+      var csv = getPreviewCsv(scenarioCache.name);
+      cont.querySelector('textarea').value = csv;
+      cont.style.display = 'block';
+    } else if (type === 'clear') {
+      cont.querySelector('textarea').value = '';
+    } else if (type === 'save') {
+      setLocalData$1(scenarioCache.name, cont.querySelector('textarea').value);
+      location.reload();
+    }
+  }
+
+  function eventMessage () {
+    window.addEventListener('load', function () {
+      var script = document.createElement('script');
+      script.innerHTML = "\n    window.blhxfy || (window.blhxfy = {})\n    window.blhxfy.sendEvent = function (name, type, data) {\n      var event = new CustomEvent('blhxfy:message', {\n        detail: {\n          type: type,\n          data: data,\n          name: name\n        }\n      })\n      document.body.dispatchEvent(event)\n    }\n    ";
+      document.head.appendChild(script);
+      document.body.addEventListener('blhxfy:message', function (e) {
+        var _e$detail = e.detail,
+            name = _e$detail.name,
+            type = _e$detail.type,
+            data = _e$detail.data;
+
+        if (name === 'setting') {
+          dbSetting(type, data);
+        } else if (name === 'dlStoryCsv') {
+          dlStoryCsv(type, data);
+        } else if (name === 'previewCsv') {
+          previewCsv(type, data);
+        }
+      });
+    });
+  }
+
   var main = function main() {
     if (window.blhxfy) return;
+    eventMessage();
     injectXHR();
-    window.blhxfy = {
-      dlStoryCsv: dlStoryCsv,
-      previewCsv: previewCsv,
-      setting: dbSetting
-    };
   };
 
   main();

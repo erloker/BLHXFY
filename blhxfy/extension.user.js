@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.1.10
+// @version      1.2.0
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
 // @match        *://game.granbluefantasy.jp/*
 // @match        *://gbf.game.mbga.jp/*
 // @run-at       document-body
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      translate.google.cn
 // @updateURL    https://blhx.danmu9.com/blhxfy/extension.user.js
 // @supportURL   https://github.com/biuuu/BLHXFY/issues
 // ==/UserScript==
@@ -5330,6 +5331,11 @@
 	  return html;
 	};
 
+	const removeHtmlTag = str => {
+	  if (!/<[^>]{1,10}>/.test(str)) return str;
+	  return str.replace(/<br\s?\/?>/g, '').replace(/<(\w{1,7})[^>]*>([^<]*)<\/\1>/g, '$2');
+	};
+
 	const replaceWords = (str, map, lang = 'en') => {
 	  if (!str) return str;
 	  let _str = str;
@@ -5708,12 +5714,15 @@
 	  hash: '',
 	  userName: '',
 	  displayName: '',
+	  defaultName: '姬塔',
 	  timeout: 8,
 	  autoDownload: false,
 	  bottomToolbar: false,
 	  removeScroller: true,
 	  hideSidebar: false,
-	  localHash: ''
+	  localHash: '',
+	  transJp: false,
+	  transEn: true
 	};
 
 	const getLocalConfig = () => {
@@ -5728,7 +5737,7 @@
 	    config.origin = origin.trim();
 	  }
 
-	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar'];
+	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar', 'transJp', 'transEn'];
 	  keys.forEach(key => {
 	    let value = setting[key];
 	    if (isString_1(value)) value = filter(value.trim());
@@ -7667,7 +7676,10 @@
 
 	const enNameMap = new Map();
 	const jpNameMap = new Map();
+	const nounMap = new Map();
+	const nounFixMap = new Map();
 	let loaded = false;
+	let nounLoaded = false;
 
 	const nameWithScenario = (list, key = 'name') => {
 	  const newList = [];
@@ -7727,6 +7739,40 @@
 	  };
 	};
 
+	const getNounData = async () => {
+	  if (!nounLoaded) {
+	    const noun = await fetchWithHash('/blhxfy/data/noun.csv');
+	    const nounFix = await fetchWithHash('/blhxfy/data/noun-fix.csv');
+	    const listNoun = parseCsv(noun);
+	    const listNounFix = parseCsv(nounFix);
+	    sortKeywords(listNoun, 'keyword').forEach(item => {
+	      const keyword = trim(item.keyword);
+	      const trans = filter(trim(item.trans));
+
+	      if (keyword && trans) {
+	        nounMap.set(keyword, {
+	          trans,
+	          ignoreCase: !item.cs
+	        });
+	      }
+	    });
+	    sortKeywords(listNounFix, 'text').forEach(item => {
+	      const text = trim(item.text);
+	      const fix = filter(trim(item.fix));
+
+	      if (text && fix) {
+	        nounFixMap.set(text, fix);
+	      }
+	    });
+	    nounLoaded = true;
+	  }
+
+	  return {
+	    nounMap,
+	    nounFixMap
+	  };
+	};
+
 	const template = `
 <style>
 #btn-setting-blhxfy {
@@ -7778,7 +7824,7 @@
 					<li>留空则使用默认的数据源</li>
 				</ul>
 				<div class="prt-button-l">
-          <input id="origin-setting-blhxfy" oninput="window.blhxfy.setting('origin', this.value)" type="text" value="" placeholder="https://blhx.danmu9.com">
+          <input id="origin-setting-blhxfy" oninput="window.blhxfy.sendEvent('setting', 'origin', this.value)" type="text" value="" placeholder="https://blhx.danmu9.com">
         </div>
       </div>
       <div class="txt-setting-lead">
@@ -7791,9 +7837,26 @@
 					<li>剧情里显示的主角名字，留空则使用你自己的昵称</li>
 				</ul>
 				<div class="prt-button-l">
-          <input id="username-setting-blhxfy" oninput="window.blhxfy.setting('username', this.value)" type="text" value="" placeholder="请输入主角名">
+          <input id="username-setting-blhxfy" oninput="window.blhxfy.sendEvent('setting', 'username', this.value)" type="text" value="" placeholder="请输入主角名">
 				</div>
-      </div>
+			</div>
+
+			<div class="prt-setting-article">
+				<div class="txt-article-title">机翻设置</div>
+				<ul class="txt-article-lead">
+					<li>仅在脚本通过油猴插件加载时有效</li>
+				</ul>
+				<div class="prt-button">
+					<div>
+						<input id="trans-jp-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'trans-jp', this.checked)" type="checkbox" value="">
+						<label for="trans-jp-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">日语机翻</label>
+					</div>
+					<div>
+						<input id="trans-en-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'trans-en', this.checked)" type="checkbox" value="">
+						<label for="trans-en-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">英语机翻</label>
+					</div>
+				</div>
+			</div>
 
       <div class="prt-setting-article">
 				<div class="txt-article-title">剧情CSV文件快捷下载</div>
@@ -7802,7 +7865,7 @@
 				</ul>
 				<div class="prt-button-l">
 					<div>
-						<input id="auto-download-setting-blhxfy" onchange="window.blhxfy.setting('auto-download', this.checked)" type="checkbox" value="">
+						<input id="auto-download-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'auto-download', this.checked)" type="checkbox" value="">
 						<label for="auto-download-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">自动下载CSV</label>
 					</div>
         </div>
@@ -7810,36 +7873,30 @@
 
 			<div class="prt-setting-article">
 				<div class="txt-article-title">UI设置</div>
-				<div class="prt-button-l">
+				<ul class="txt-article-lead">
+					<li>可以隐藏Mobage侧边栏（PC网页）/显示底部工具栏（手机浏览器中）</li>
+				</ul>
+				<div class="prt-button">
 					<div>
-						<input id="remove-scroller-setting-blhxfy" onchange="window.blhxfy.setting('remove-scroller', this.checked)" type="checkbox" value="">
+						<input id="remove-scroller-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'remove-scroller', this.checked)" type="checkbox" value="">
 						<label for="remove-scroller-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">隐藏滚动条</label>
 					</div>
 					<div>
-						<input id="hide-sidebar-setting-blhxfy" onchange="window.blhxfy.setting('hide-sidebar', this.checked)" type="checkbox" value="">
+						<input id="hide-sidebar-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'hide-sidebar', this.checked)" type="checkbox" value="">
 						<label for="hide-sidebar-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">隐藏侧边栏</label>
+					</div>
+					<div>
+						<input id="bottom-toolbar-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'bottom-toolbar', this.checked)" type="checkbox" value="">
+						<label for="bottom-toolbar-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">底部工具栏</label>
 					</div>
 				</div>
 			</div>
 
-			<div class="prt-setting-article">
-				<div class="txt-article-title">显示底部工具栏</div>
-				<ul class="txt-article-lead">
-					<li>在手机浏览器上也显示底部工具栏</li>
-				</ul>
-				<div class="prt-button-l">
-					<div>
-						<input id="bottom-toolbar-setting-blhxfy" onchange="window.blhxfy.setting('bottom-toolbar', this.checked)" type="checkbox" value="">
-						<label for="bottom-toolbar-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">底部工具栏</label>
-					</div>
-				</div>
-      </div>
       <div class="txt-setting-lead">
         ※修改的设置在刷新页面后生效
       </div>
 		</div>
 	</div>
-
 
 	<div class="prt-lead-link">
 		<div class="lis-lead-prev" data-href="setting"><div class="atx-lead-link">返回设置</div></div>
@@ -7849,14 +7906,24 @@
 </div>
 `;
 	function insertSettingHtml (html) {
-	  return html.replace('<div class="cnt-setting">', `${template}<div class="cnt-setting"><div class="cnt-setting"><div class="btn-usual-text" id="btn-setting-blhxfy" onclick="window.blhxfy.setting(\'show\')">汉化插件设置</div>`);
+	  return html.replace('<div class="cnt-setting">', `${template}<div class="cnt-setting"><div class="cnt-setting"><div class="btn-usual-text" id="btn-setting-blhxfy" onclick="window.blhxfy.sendEvent('setting', 'show')">汉化插件设置</div>`);
 	}
 
-	const extraHtml = template.replace('data-href="setting"', 'onclick="window.blhxfy.setting(\'hide\')"').replace('返回设置', '返回剧情');
+	const extraHtml = template.replace('data-href="setting"', 'onclick="window.blhxfy.sendEvent(\'setting\', \'hide\')"').replace('返回设置', '返回剧情');
 	const html$2 = `
 <style>
+.cnt-quest-scene .prt-log-display {
+  padding-top: 74px;
+}
 #blhxfy-story-tool {
   display: none;
+}
+#blhxfy-story-tool > div {
+  width: 152px;
+  margin: 7px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 #blhxfy-story-input button,
 #blhxfy-story-tool button {
@@ -7891,7 +7958,7 @@
 .log #blhxfy-story-tool {
   display: block;
   position: absolute;
-  top: 33px;
+  top: 26px;
   left: 0;
   width: 100%;
   z-index: 9999;
@@ -7945,20 +8012,42 @@
   resize: none;
   font-family: Consolas, "Microsoft Yahei";
 }
+.language-setting-blhxfy {
+  font-size: 10px;
+  color: #fff;
+  top: 1px;
+  position: relative;
+  font-family: Microsoft Jhenghei;
+}
+.language-setting-blhxfy select {
+  border: none;
+    border-radius: 2px;
+}
 </style>
 <div id="blhxfy-story-tool">
-  <button onclick="window.blhxfy.dlStoryCsv()" title="下载未翻译的剧情文本">原文</button>
-  <button onclick="window.blhxfy.dlStoryCsv('fill')" title="下载用原文填充trans列的剧情文本">填充</button>
-  <button onclick="window.blhxfy.dlStoryCsv('trans')" title="下载已翻译的剧情文本">译文</button>
-  <button onclick="window.blhxfy.previewCsv('show')" title="填写翻译好的剧情文本来预览">预览</button>
-  <button onclick="window.blhxfy.setting('show')" title="插件设置">设置</button>
+  <div>
+    <button onclick="window.blhxfy.sendEvent('dlStoryCsv')" title="下载未翻译的剧情文本">原文</button>
+    <button onclick="window.blhxfy.sendEvent('dlStoryCsv', 'fill')" title="下载用原文填充trans列的剧情文本">填充</button>
+    <button onclick="window.blhxfy.sendEvent('dlStoryCsv', 'trans')" title="下载已翻译的剧情文本">译文</button>
+    <button onclick="window.blhxfy.sendEvent('previewCsv', 'show')" title="填写翻译好的剧情文本来预览">预览</button>
+  </div>
+  <div>
+    <div class="language-setting-blhxfy">
+      <span>语言：</span>
+      <select id="language-type-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'language', event)" class="frm-list-select frm-post-async is-reload" data-post-name="language_type">
+        <option value="1">日本語</option>
+        <option value="2">English</option>
+      </select>
+    </div>
+    <button onclick="window.blhxfy.sendEvent('setting', 'show')" title="插件设置">设置</button>
+  </div>
 </div>
 <div id="blhxfy-story-input">
   <div class="blhxfy-preview-tool">
-    <button onclick="window.blhxfy.previewCsv('hide')">取消</button>
-    <button onclick="window.blhxfy.previewCsv('save')" title="保存预览文本并刷新页面">保存</button>
+    <button onclick="window.blhxfy.sendEvent('previewCsv', 'hide')">取消</button>
+    <button onclick="window.blhxfy.sendEvent('previewCsv', 'save')" title="保存预览文本并刷新页面">保存</button>
   </div>
-  <p>请将编辑好的剧情文本粘贴到文本框<a onclick="window.blhxfy.previewCsv('clear')" title="清除预览文本">清空</a></p>
+  <p>请将编辑好的剧情文本粘贴到文本框<a onclick="window.blhxfy.sendEvent('previewCsv', 'clear')" title="清除预览文本">清空</a></p>
   <textarea placeholder="剧情文本"></textarea>
 </div>
 <link type="text/css" rel="stylesheet" href="${Game.cssUri}/setting/index.css">
@@ -7971,6 +8060,11 @@ ${extraHtml}
 
 	  if (cont[0]) {
 	    cont.prepend(html$2);
+	    const langVal = {
+	      ja: 1,
+	      en: 2
+	    };
+	    $('#language-type-blhxfy').val(langVal[Game.lang]);
 	  }
 	}
 
@@ -10292,7 +10386,386 @@ ${extraHtml}
 
 	var cloneDeep_1 = cloneDeep;
 
+	const CROSS_DOMAIN_REQ = !!window.GM_xmlhttpRequest;
+
+	const request = (url, option) => {
+	  const {
+	    method = 'GET',
+	    headers,
+	    responseType = 'json',
+	    data
+	  } = option;
+	  return new Promise((rev, rej) => {
+	    if (!CROSS_DOMAIN_REQ) return rej('need tampermonkey to send request');
+	    window.GM_xmlhttpRequest({
+	      method,
+	      url,
+	      headers,
+	      responseType,
+	      data,
+
+	      onload({
+	        status,
+	        responseText,
+	        statusText
+	      }) {
+	        if (status >= 200 && status < 300) {
+	          if (responseType === 'json') {
+	            const obj = JSON.parse(responseText);
+	            rev(obj);
+	          } else {
+	            rev(responseText);
+	          }
+	        } else {
+	          rej(statusText);
+	        }
+	      },
+
+	      onerror(err) {
+	        rej(err);
+	      }
+
+	    });
+	  });
+	};
+
+	var urlSearchParams_node = createCommonjsModule(function (module) {
+
+	function URLSearchParams(query) {
+	  var
+	    index, key, value,
+	    pairs, i, length,
+	    dict = Object.create(null)
+	  ;
+	  this[secret] = dict;
+	  if (!query) return;
+	  if (typeof query === 'string') {
+	    if (query.charAt(0) === '?') {
+	      query = query.slice(1);
+	    }
+	    for (
+	      pairs = query.split('&'),
+	      i = 0,
+	      length = pairs.length; i < length; i++
+	    ) {
+	      value = pairs[i];
+	      index = value.indexOf('=');
+	      if (-1 < index) {
+	        appendTo(
+	          dict,
+	          decode(value.slice(0, index)),
+	          decode(value.slice(index + 1))
+	        );
+	      } else if (value.length){
+	        appendTo(
+	          dict,
+	          decode(value),
+	          ''
+	        );
+	      }
+	    }
+	  } else {
+	    if (isArray(query)) {
+	      for (
+	        i = 0,
+	        length = query.length; i < length; i++
+	      ) {
+	        value = query[i];
+	        appendTo(dict, value[0], value[1]);
+	      }
+	    } else if (query.forEach) {
+	      query.forEach(addEach, dict);
+	    } else {
+	      for (key in query) {
+	         appendTo(dict, key, query[key]);
+	      }
+	    }
+	  }
+	}
+
+	var
+	  isArray = Array.isArray,
+	  URLSearchParamsProto = URLSearchParams.prototype,
+	  find = /[!'\(\)~]|%20|%00/g,
+	  plus = /\+/g,
+	  replace = {
+	    '!': '%21',
+	    "'": '%27',
+	    '(': '%28',
+	    ')': '%29',
+	    '~': '%7E',
+	    '%20': '+',
+	    '%00': '\x00'
+	  },
+	  replacer = function (match) {
+	    return replace[match];
+	  },
+	  secret = '__URLSearchParams__:' + Math.random()
+	;
+
+	function addEach(value, key) {
+	  /* jshint validthis:true */
+	  appendTo(this, key, value);
+	}
+
+	function appendTo(dict, name, value) {
+	  var res = isArray(value) ? value.join(',') : value;
+	  if (name in dict)
+	    dict[name].push(res);
+	  else
+	    dict[name] = [res];
+	}
+
+	function decode(str) {
+	  return decodeURIComponent(str.replace(plus, ' '));
+	}
+
+	function encode(str) {
+	  return encodeURIComponent(str).replace(find, replacer);
+	}
+
+	URLSearchParamsProto.append = function append(name, value) {
+	  appendTo(this[secret], name, value);
+	};
+
+	URLSearchParamsProto.delete = function del(name) {
+	  delete this[secret][name];
+	};
+
+	URLSearchParamsProto.get = function get(name) {
+	  var dict = this[secret];
+	  return name in dict ? dict[name][0] : null;
+	};
+
+	URLSearchParamsProto.getAll = function getAll(name) {
+	  var dict = this[secret];
+	  return name in dict ? dict[name].slice(0) : [];
+	};
+
+	URLSearchParamsProto.has = function has(name) {
+	  return name in this[secret];
+	};
+
+	URLSearchParamsProto.set = function set(name, value) {
+	  this[secret][name] = ['' + value];
+	};
+
+	URLSearchParamsProto.forEach = function forEach(callback, thisArg) {
+	  var dict = this[secret];
+	  Object.getOwnPropertyNames(dict).forEach(function(name) {
+	    dict[name].forEach(function(value) {
+	      callback.call(thisArg, value, name, this);
+	    }, this);
+	  }, this);
+	};
+
+	/*
+	URLSearchParamsProto.toBody = function() {
+	  return new Blob(
+	    [this.toString()],
+	    {type: 'application/x-www-form-urlencoded'}
+	  );
+	};
+	*/
+
+	URLSearchParamsProto.toJSON = function toJSON() {
+	  return {};
+	};
+
+	URLSearchParamsProto.toString = function toString() {
+	  var dict = this[secret], query = [], i, key, name, value;
+	  for (key in dict) {
+	    name = encode(key);
+	    for (
+	      i = 0,
+	      value = dict[key];
+	      i < value.length; i++
+	    ) {
+	      query.push(name + '=' + encode(value[i]));
+	    }
+	  }
+	  return query.join('&');
+	};
+
+	URLSearchParams = (module.exports = commonjsGlobal.URLSearchParams || URLSearchParams);
+
+	(function (URLSearchParamsProto) {
+
+	  var iterable = (function () {
+	    try {
+	      return !!Symbol.iterator;
+	    } catch(error) {
+	      return false;
+	    }
+	  }());
+
+	  // mostly related to issue #24
+	  if (!('forEach' in URLSearchParamsProto)) {
+	    URLSearchParamsProto.forEach = function forEach(callback, thisArg) {
+	      var names = Object.create(null);
+	      this.toString()
+	          .replace(/=[\s\S]*?(?:&|$)/g, '=')
+	          .split('=')
+	          .forEach(function (name) {
+	            if (!name.length || name in names) return;
+	            (names[name] = this.getAll(name)).forEach(function(value) {
+	              callback.call(thisArg, value, name, this);
+	            }, this);
+	          }, this);
+	    };
+	  }
+
+	  if (!('keys' in URLSearchParamsProto)) {
+	    URLSearchParamsProto.keys = function keys() {
+	      var items = [];
+	      this.forEach(function(value, name) { items.push(name); });
+	      var iterator = {
+	        next: function() {
+	          var value = items.shift();
+	          return {done: value === undefined, value: value};
+	        }
+	      };
+
+	      if (iterable) {
+	        iterator[Symbol.iterator] = function() {
+	          return iterator;
+	        };
+	      }
+
+	      return iterator;
+	    };
+	  }
+
+	  if (!('values' in URLSearchParamsProto)) {
+	    URLSearchParamsProto.values = function values() {
+	      var items = [];
+	      this.forEach(function(value) { items.push(value); });
+	      var iterator = {
+	        next: function() {
+	          var value = items.shift();
+	          return {done: value === undefined, value: value};
+	        }
+	      };
+
+	      if (iterable) {
+	        iterator[Symbol.iterator] = function() {
+	          return iterator;
+	        };
+	      }
+
+	      return iterator;
+	    };
+	  }
+
+	  if (!('entries' in URLSearchParamsProto)) {
+	    URLSearchParamsProto.entries = function entries() {
+	      var items = [];
+	      this.forEach(function(value, name) { items.push([name, value]); });
+	      var iterator = {
+	        next: function() {
+	          var value = items.shift();
+	          return {done: value === undefined, value: value};
+	        }
+	      };
+
+	      if (iterable) {
+	        iterator[Symbol.iterator] = function() {
+	          return iterator;
+	        };
+	      }
+
+	      return iterator;
+	    };
+	  }
+
+	  if (iterable && !(Symbol.iterator in URLSearchParamsProto)) {
+	    URLSearchParamsProto[Symbol.iterator] = URLSearchParamsProto.entries;
+	  }
+
+	  if (!('sort' in URLSearchParamsProto)) {
+	    URLSearchParamsProto.sort = function sort() {
+	      var
+	        entries = this.entries(),
+	        entry = entries.next(),
+	        done = entry.done,
+	        keys = [],
+	        values = Object.create(null),
+	        i, key, value
+	      ;
+	      while (!done) {
+	        value = entry.value;
+	        key = value[0];
+	        keys.push(key);
+	        if (!(key in values)) {
+	          values[key] = [];
+	        }
+	        values[key].push(value[1]);
+	        entry = entries.next();
+	        done = entry.done;
+	      }
+	      // not the champion in efficiency
+	      // but these two bits just do the job
+	      keys.sort();
+	      for (i = 0; i < keys.length; i++) {
+	        this.delete(keys[i]);
+	      }
+	      for (i = 0; i < keys.length; i++) {
+	        key = keys[i];
+	        this.append(key, values[key].shift());
+	      }
+	    };
+	  }
+
+	}(URLSearchParams.prototype));
+	});
+
+	const getTransResult = data => {
+	  if (data[0] && data[0].length) {
+	    const result = data[0].map(item => item[0]).join('');
+	    return result;
+	  }
+
+	  return '';
+	};
+
+	const googleTrans = async (keyword, lang = 'en', to = 'zh-CN') => {
+	  let query = new urlSearchParams_node({
+	    client: 'gtx',
+	    sl: lang,
+	    tl: to,
+	    hl: 'zh-CN',
+	    ie: 'UTF-8',
+	    oe: 'UTF-8'
+	  });
+	  query = query.toString();
+	  ['at', 'bd', 'ex', 'ld', 'md', 'qca', 'rw', 'rm', 'ss', 't'].forEach(item => {
+	    query += `&dt=${item}`;
+	  });
+	  const data = new urlSearchParams_node({
+	    q: keyword
+	  });
+
+	  try {
+	    const res = await request(`https://translate.google.cn/translate_a/single?${query}`, {
+	      data: data.toString(),
+	      method: 'POST',
+	      headers: {
+	        'accept': '*/*',
+	        'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+	        'referer': 'https://translate.google.cn',
+	        'origin': 'https://translate.google.cn'
+	      }
+	    });
+	    const txt = getTransResult(res);
+	    return txt;
+	  } catch (err) {
+	    console.error(`${err.message}\n${err.stack}`);
+	    return '';
+	  }
+	};
+
 	const txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+	const WORDS_LIMIT = 4500;
 	const scenarioCache = {
 	  data: null,
 	  name: '',
@@ -10311,6 +10784,87 @@ ${extraHtml}
 	  }
 
 	  return pathname;
+	};
+
+	const collectTxt = data => {
+	  const txtList = [];
+	  const infoList = [];
+
+	  const getTxt = (obj, key) => {
+	    const txt = obj[key];
+
+	    if (txt) {
+	      txtList.push(txt.replace(/\n/g, '').trim());
+	      infoList.push({
+	        id: obj.id,
+	        type: key
+	      });
+	    }
+	  };
+
+	  data.forEach(item => {
+	    txtKeys.forEach(key => getTxt(item, key));
+	  });
+	  return {
+	    txtList,
+	    infoList
+	  };
+	};
+
+	const transMulti = async (list, nameMap, nounMap, nounFixMap) => {
+	  let count = 0;
+	  let strTemp = '';
+	  const txtStr = [];
+	  const userName = config.userName;
+	  const lang = Game.lang;
+	  list.forEach(txt => {
+	    strTemp += txt;
+	    count += new Blob([txt]).size;
+
+	    if (count > WORDS_LIMIT) {
+	      txtStr.push(strTemp);
+	      count = 0;
+	      strTemp = '';
+	    } else {
+	      strTemp += '\n';
+	    }
+	  });
+
+	  if (strTemp) {
+	    txtStr.push(strTemp);
+	  }
+
+	  const transStr = await Promise.all(txtStr.map(txt => {
+	    txt = removeHtmlTag(txt);
+	    txt = replaceWords(txt, nameMap, lang);
+	    txt = replaceWords(txt, nounMap, lang);
+
+	    if (userName && lang === 'en') {
+	      let _lang = lang;
+	      if (!/^\w+$/.test(userName)) _lang = 'unknown';
+	      txt = replaceWords(txt, new Map([[userName, config.defaultName]]), _lang);
+	    }
+
+	    const targetLang = config.lang !== 'hant' ? 'zh-CN' : 'zh-TW';
+	    return googleTrans(txt, lang, targetLang);
+	  }));
+	  return transStr.reduce((result, str) => {
+	    let _str = str;
+
+	    if (str) {
+	      if (userName) {
+	        _str = _str.replace(new RegExp(config.defaultName, 'g'), userName);
+	      }
+
+	      for (let [text, fix] of nounFixMap) {
+	        _str = _str.replace(new RegExp(text, 'g'), fix);
+	      }
+
+	      return result.concat(_str.split('\n'));
+	    }
+
+	    return result;
+	  }, []);
 	};
 
 	const getScenario = async name => {
@@ -10339,7 +10893,7 @@ ${extraHtml}
 	      const id = idArr[0];
 	      const type = idArr[1] || 'detail';
 	      const obj = transMap.get(id) || {};
-	      obj[type] = item.trans ? filter(item.trans.replace(/姬塔/g, config.displayName || config.userName)) : false;
+	      obj[type] = item.trans ? filter(item.trans.replace(new RegExp(config.defaultName, 'g'), config.displayName || config.userName)) : false;
 	      obj[`${type}-origin`] = item.trans;
 	      transMap.set(id, obj);
 	    }
@@ -10461,17 +11015,40 @@ ${extraHtml}
 	  scenarioCache.name = scenarioName;
 	  scenarioCache.hasTrans = false;
 	  scenarioCache.originName = '';
-	  const {
+	  let {
 	    transMap,
 	    csv
 	  } = await getScenario(scenarioName);
 	  const nameData = await getNameData();
 	  const nameMap = Game.lang !== 'ja' ? nameData['enNameMap'] : nameData['jpNameMap'];
 	  scenarioCache.nameMap = nameMap;
-	  if (!transMap) return data;
-	  scenarioCache.hasTrans = true;
-	  scenarioCache.csv = csv;
-	  scenarioCache.transMap = transMap;
+
+	  if (!transMap) {
+	    if (config.transJp && Game.lang === 'ja' || config.transEn && Game.lang === 'en') {
+	      const {
+	        nounMap,
+	        nounFixMap
+	      } = await getNounData();
+	      transMap = new Map();
+	      const {
+	        txtList,
+	        infoList
+	      } = collectTxt(data);
+	      const transList = await transMulti(txtList, nameMap, nounMap, nounFixMap);
+	      infoList.forEach((info, index) => {
+	        const obj = transMap.get(info.id) || {};
+	        obj[info.type] = transList[index] || '';
+	        transMap.set(info.id, obj);
+	      });
+	    } else {
+	      return data;
+	    }
+	  } else {
+	    scenarioCache.hasTrans = true;
+	    scenarioCache.csv = csv;
+	    scenarioCache.transMap = transMap;
+	  }
+
 	  data.forEach(item => {
 	    let name1, name2, name3;
 	    name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -11822,124 +12399,6 @@ ${extraHtml}
 	  };
 	};
 
-	const txtKeys$1 = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
-
-	const replaceName = (content, userName) => {
-	  if (userName) {
-	    content.forEach(item => {
-	      if (item.id === 'info') return;
-	      ['name', 'text', 'trans'].forEach(key => {
-	        if (!item[key]) return;
-	        let _lang = Game.lang;
-	        if (!/^\w+$/.test(userName)) _lang = 'unknown';
-	        item[key] = replaceWords(item[key], new Map([[userName, '姬塔']]), _lang);
-	      });
-	    });
-	  }
-	};
-
-	const dataToCsv = (data, fill, isTrans) => {
-	  const result = [];
-	  data.forEach(item => {
-	    const name = removeTag(item.charcter1_name);
-	    replaceChar('charcter1_name', item, scenarioCache.nameMap, scenarioCache.name);
-	    const transName = removeTag(item.charcter1_name);
-	    const hasTransName = name !== transName;
-	    txtKeys$1.forEach(key => {
-	      let txt = item[key];
-	      let hasName = key === 'detail' && name && name !== 'null';
-
-	      if (txt) {
-	        txt = txt.replace(/\n/g, '');
-	        let trans = '';
-
-	        if (isTrans) {
-	          const obj = scenarioCache.transMap.get(item.id);
-
-	          if (obj && obj[`${key}-origin`]) {
-	            trans = obj[`${key}-origin`];
-	          }
-	        } else if (fill) {
-	          trans = txt;
-	        }
-
-	        result.push({
-	          id: `${item.id}${key === 'detail' ? '' : '-' + key}`,
-	          name: hasName ? `${name}${hasTransName ? '/' + transName : ''}` : '',
-	          text: txt,
-	          trans
-	        });
-	      }
-	    });
-	  });
-	  const extraInfo = {
-	    id: 'info',
-	    name: '',
-	    text: '',
-	    trans: scenarioCache.name
-	  };
-	  replaceName(result, config.userName);
-	  result.push(extraInfo);
-	  return papaparse.unparse(result);
-	};
-
-	function dlStoryCsv (type = 'normal') {
-	  if (type === 'normal') {
-	    tryDownload(dataToCsv(scenarioCache.data), scenarioCache.name + '.csv');
-	  } else if (type === 'trans') {
-	    if (scenarioCache.hasTrans) {
-	      tryDownload(dataToCsv(scenarioCache.data, false, true), scenarioCache.originName);
-	    } else {
-	      alert('这个章节还没有翻译。');
-	    }
-	  } else if (type === 'fill') {
-	    tryDownload(dataToCsv(scenarioCache.data, true), scenarioCache.name + '.csv');
-	  }
-	}
-
-	const setLocalData$1 = (name, csv) => {
-	  const data = getPreview();
-	  let exist = false;
-
-	  for (let item of data) {
-	    if (item.name === name) {
-	      exist = true;
-	      item.csv = csv;
-	      break;
-	    }
-	  }
-
-	  if (!exist) {
-	    if (data.length >= 5) {
-	      data.shift();
-	    }
-
-	    data.push({
-	      name,
-	      csv
-	    });
-	  }
-
-	  sessionStorage.setItem('blhxfy:preview', JSON.stringify(data));
-	};
-
-	function previewCsv (type) {
-	  const cont = document.getElementById('blhxfy-story-input');
-
-	  if (type === 'hide') {
-	    cont.style.display = 'none';
-	  } else if (type === 'show') {
-	    const csv = getPreviewCsv(scenarioCache.name);
-	    cont.querySelector('textarea').value = csv;
-	    cont.style.display = 'block';
-	  } else if (type === 'clear') {
-	    cont.querySelector('textarea').value = '';
-	  } else if (type === 'save') {
-	    setLocalData$1(scenarioCache.name, cont.querySelector('textarea').value);
-	    location.reload();
-	  }
-	}
-
 	const addToolbar = () => {
 	  if (config.bottomToolbar) {
 	    document.addEventListener('DOMContentLoaded', function () {
@@ -12314,7 +12773,7 @@ ${extraHtml}
 	  localStorage.setItem('blhxfy:setting', JSON.stringify(data));
 	};
 
-	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar']]);
+	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar'], ['trans-jp', 'transJp'], ['trans-en', 'transEn']]);
 
 	const setting = (type, value) => {
 	  if (type === 'show') {
@@ -12331,6 +12790,12 @@ ${extraHtml}
 	    $('#blhxfy-setting-modal').addClass('show');
 	  } else if (type === 'hide') {
 	    $('#blhxfy-setting-modal').removeClass('show');
+	  } else if (type === 'language') {
+	    require(['view/setting/index'], function (sett) {
+	      sett.prototype.onChangePostAsyncInput({
+	        currentTarget: value.target
+	      });
+	    });
 	  } else {
 	    saveToLocalstorage(keyMap.get(type), value);
 	  }
@@ -12338,14 +12803,163 @@ ${extraHtml}
 
 	const dbSetting = debounce_1(setting, 500);
 
+	const txtKeys$1 = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+
+	const replaceName = (content, userName) => {
+	  if (userName) {
+	    content.forEach(item => {
+	      if (item.id === 'info') return;
+	      ['name', 'text', 'trans'].forEach(key => {
+	        if (!item[key]) return;
+	        let _lang = Game.lang;
+	        if (!/^\w+$/.test(userName)) _lang = 'unknown';
+	        item[key] = replaceWords(item[key], new Map([[userName, '姬塔']]), _lang);
+	      });
+	    });
+	  }
+	};
+
+	const dataToCsv = (data, fill, isTrans) => {
+	  const result = [];
+	  data.forEach(item => {
+	    const name = removeTag(item.charcter1_name);
+	    replaceChar('charcter1_name', item, scenarioCache.nameMap, scenarioCache.name);
+	    const transName = removeTag(item.charcter1_name);
+	    const hasTransName = name !== transName;
+	    txtKeys$1.forEach(key => {
+	      let txt = item[key];
+	      let hasName = key === 'detail' && name && name !== 'null';
+
+	      if (txt) {
+	        txt = txt.replace(/\n/g, '');
+	        let trans = '';
+
+	        if (isTrans) {
+	          const obj = scenarioCache.transMap.get(item.id);
+
+	          if (obj && obj[`${key}-origin`]) {
+	            trans = obj[`${key}-origin`];
+	          }
+	        } else if (fill) {
+	          trans = txt;
+	        }
+
+	        result.push({
+	          id: `${item.id}${key === 'detail' ? '' : '-' + key}`,
+	          name: hasName ? `${name}${hasTransName ? '/' + transName : ''}` : '',
+	          text: txt,
+	          trans
+	        });
+	      }
+	    });
+	  });
+	  const extraInfo = {
+	    id: 'info',
+	    name: '',
+	    text: '',
+	    trans: scenarioCache.name
+	  };
+	  replaceName(result, config.userName);
+	  result.push(extraInfo);
+	  return papaparse.unparse(result);
+	};
+
+	function dlStoryCsv (type = 'normal') {
+	  if (type === 'normal') {
+	    tryDownload(dataToCsv(scenarioCache.data), scenarioCache.name + '.csv');
+	  } else if (type === 'trans') {
+	    if (scenarioCache.hasTrans) {
+	      tryDownload(dataToCsv(scenarioCache.data, false, true), scenarioCache.originName);
+	    } else {
+	      alert('这个章节还没有翻译。');
+	    }
+	  } else if (type === 'fill') {
+	    tryDownload(dataToCsv(scenarioCache.data, true), scenarioCache.name + '.csv');
+	  }
+	}
+
+	const setLocalData$1 = (name, csv) => {
+	  const data = getPreview();
+	  let exist = false;
+
+	  for (let item of data) {
+	    if (item.name === name) {
+	      exist = true;
+	      item.csv = csv;
+	      break;
+	    }
+	  }
+
+	  if (!exist) {
+	    if (data.length >= 5) {
+	      data.shift();
+	    }
+
+	    data.push({
+	      name,
+	      csv
+	    });
+	  }
+
+	  sessionStorage.setItem('blhxfy:preview', JSON.stringify(data));
+	};
+
+	function previewCsv (type) {
+	  const cont = document.getElementById('blhxfy-story-input');
+
+	  if (type === 'hide') {
+	    cont.style.display = 'none';
+	  } else if (type === 'show') {
+	    const csv = getPreviewCsv(scenarioCache.name);
+	    cont.querySelector('textarea').value = csv;
+	    cont.style.display = 'block';
+	  } else if (type === 'clear') {
+	    cont.querySelector('textarea').value = '';
+	  } else if (type === 'save') {
+	    setLocalData$1(scenarioCache.name, cont.querySelector('textarea').value);
+	    location.reload();
+	  }
+	}
+
+	function eventMessage () {
+	  window.addEventListener('load', function () {
+	    const script = document.createElement('script');
+	    script.innerHTML = `
+    window.blhxfy || (window.blhxfy = {})
+    window.blhxfy.sendEvent = function (name, type, data) {
+      var event = new CustomEvent('blhxfy:message', {
+        detail: {
+          type: type,
+          data: data,
+          name: name
+        }
+      })
+      document.body.dispatchEvent(event)
+    }
+    `;
+	    document.head.appendChild(script);
+	    document.body.addEventListener('blhxfy:message', function (e) {
+	      const {
+	        name,
+	        type,
+	        data
+	      } = e.detail;
+
+	      if (name === 'setting') {
+	        dbSetting(type, data);
+	      } else if (name === 'dlStoryCsv') {
+	        dlStoryCsv(type, data);
+	      } else if (name === 'previewCsv') {
+	        previewCsv(type, data);
+	      }
+	    });
+	  });
+	}
+
 	const main = () => {
 	  if (window.blhxfy) return;
+	  eventMessage();
 	  injectXHR();
-	  window.blhxfy = {
-	    dlStoryCsv,
-	    previewCsv,
-	    setting: dbSetting
-	  };
 	};
 
 	main();
