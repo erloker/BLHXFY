@@ -10414,6 +10414,14 @@ ${extraHtml}
 	  });
 	};
 
+	try {
+	  if (new URLSearchParams({
+	    q: '+'
+	  }).get('+') !== '+' || new URLSearchParams('q=%2B').get('q') !== '+') throw {};
+	} catch (error) {
+	  window.URLSearchParams = void 0;
+	}
+
 	var urlSearchParams_node = createCommonjsModule(function (module) {
 
 	function URLSearchParams(query) {
@@ -10821,7 +10829,11 @@ ${extraHtml}
 
 	  const transStr = await Promise.all(txtStr.map(txt => {
 	    txt = removeHtmlTag(txt);
-	    txt = replaceWords(txt, nameMap, lang);
+
+	    if (lang === 'en') {
+	      txt = replaceWords(txt, nameMap, lang);
+	    }
+
 	    txt = replaceWords(txt, nounMap, lang);
 
 	    if (userName && lang === 'en') {

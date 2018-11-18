@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.2.0
+// @version      1.2.1
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -12952,6 +12952,14 @@
     });
   };
 
+  try {
+    if (new URLSearchParams({
+      q: '+'
+    }).get('+') !== '+' || new URLSearchParams('q=%2B').get('q') !== '+') throw {};
+  } catch (error) {
+    window.URLSearchParams = void 0;
+  }
+
   var urlSearchParams_node = createCommonjsModule(function (module) {
 
   function URLSearchParams(query) {
@@ -13409,7 +13417,11 @@
               _context.next = 9;
               return Promise.all(txtStr.map(function (txt) {
                 txt = removeHtmlTag(txt);
-                txt = replaceWords(txt, nameMap, lang);
+
+                if (lang === 'en') {
+                  txt = replaceWords(txt, nameMap, lang);
+                }
+
                 txt = replaceWords(txt, nounMap, lang);
 
                 if (userName && lang === 'en') {
