@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.2.1
+// @version      1.2.2
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -12015,11 +12015,15 @@ ${extraHtml}
 	  return data;
 	};
 
-	const replaceHour = data => {
+	const replaceHour = (data, type) => {
 	  let status;
 
 	  try {
-	    status = data.option.user_status;
+	    if (type === 'user') {
+	      status = data.status;
+	    } else {
+	      status = data.option.user_status;
+	    }
 	  } catch (e) {
 	    return data;
 	  }
@@ -12237,6 +12241,8 @@ ${extraHtml}
 	      data = await transChat(data);
 	    } else if (/\/rest\/.*?raid\/condition\/\d+\/\d\/\d\.json/.test(pathname)) {
 	      await transBuff(data.condition);
+	    } else if (pathname.includes('/user/status')) {
+	      data = replaceHour(data, 'user');
 	    } else {
 	      return;
 	    }

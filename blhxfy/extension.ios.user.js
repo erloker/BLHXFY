@@ -12000,11 +12000,15 @@ ${extraHtml}
 	  return data;
 	};
 
-	const replaceHour = data => {
+	const replaceHour = (data, type) => {
 	  let status;
 
 	  try {
-	    status = data.option.user_status;
+	    if (type === 'user') {
+	      status = data.status;
+	    } else {
+	      status = data.option.user_status;
+	    }
 	  } catch (e) {
 	    return data;
 	  }
@@ -12222,6 +12226,8 @@ ${extraHtml}
 	      data = await transChat(data);
 	    } else if (/\/rest\/.*?raid\/condition\/\d+\/\d\/\d\.json/.test(pathname)) {
 	      await transBuff(data.condition);
+	    } else if (pathname.includes('/user/status')) {
+	      data = replaceHour(data, 'user');
 	    } else {
 	      return;
 	    }

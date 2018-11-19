@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.2.1
+// @version      1.2.2
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -16202,11 +16202,15 @@
     };
   }();
 
-  var replaceHour = function replaceHour(data) {
+  var replaceHour = function replaceHour(data, type) {
     var status;
 
     try {
-      status = data.option.user_status;
+      if (type === 'user') {
+        status = data.status;
+      } else {
+        status = data.option.user_status;
+      }
     } catch (e) {
       return data;
     }
@@ -16526,7 +16530,7 @@
               }
 
               if (!(apiHosts.indexOf(hostname) !== -1)) {
-                _context.next = 77;
+                _context.next = 81;
                 break;
               }
 
@@ -16541,7 +16545,7 @@
 
             case 11:
               data = _context.sent;
-              _context.next = 75;
+              _context.next = 79;
               break;
 
             case 14:
@@ -16598,7 +16602,7 @@
 
             case 37:
               data = _context.sent;
-              _context.next = 75;
+              _context.next = 79;
               break;
 
             case 40:
@@ -16612,7 +16616,7 @@
 
             case 43:
               data = _context.sent;
-              _context.next = 75;
+              _context.next = 79;
               break;
 
             case 46:
@@ -16626,7 +16630,7 @@
 
             case 49:
               data = _context.sent;
-              _context.next = 75;
+              _context.next = 79;
               break;
 
             case 52:
@@ -16640,7 +16644,7 @@
 
             case 55:
               data = _context.sent;
-              _context.next = 75;
+              _context.next = 79;
               break;
 
             case 58:
@@ -16653,7 +16657,7 @@
               return showVoiceSub(data, pathname, 'list');
 
             case 61:
-              _context.next = 75;
+              _context.next = 79;
               break;
 
             case 63:
@@ -16667,7 +16671,7 @@
 
             case 66:
               data = _context.sent;
-              _context.next = 75;
+              _context.next = 79;
               break;
 
             case 69:
@@ -16680,23 +16684,33 @@
               return transBuff(data.condition);
 
             case 72:
-              _context.next = 75;
+              _context.next = 79;
               break;
 
             case 74:
-              return _context.abrupt("return");
+              if (!pathname.includes('/user/status')) {
+                _context.next = 78;
+                break;
+              }
 
-            case 75:
-              _context.next = 78;
+              data = replaceHour(data, 'user');
+              _context.next = 79;
               break;
 
-            case 77:
+            case 78:
               return _context.abrupt("return");
 
-            case 78:
+            case 79:
+              _context.next = 82;
+              break;
+
+            case 81:
+              return _context.abrupt("return");
+
+            case 82:
               state.result = isJSON ? JSON.stringify(data) : data;
 
-            case 79:
+            case 83:
             case "end":
               return _context.stop();
           }
