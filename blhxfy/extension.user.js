@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.2.2
+// @version      1.2.3
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5722,7 +5722,8 @@
 	  hideSidebar: false,
 	  localHash: '',
 	  transJp: false,
-	  transEn: true
+	  transEn: true,
+	  keepBgm: false
 	};
 
 	const getLocalConfig = () => {
@@ -5737,7 +5738,7 @@
 	    config.origin = origin.trim();
 	  }
 
-	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar', 'transJp', 'transEn'];
+	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar', 'transJp', 'transEn', 'keepBgm'];
 	  keys.forEach(key => {
 	    let value = setting[key];
 	    if (isString_1(value)) value = filter(value.trim());
@@ -7867,6 +7868,19 @@
 					<div>
 						<input id="auto-download-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'auto-download', this.checked)" type="checkbox" value="">
 						<label for="auto-download-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">自动下载CSV</label>
+					</div>
+        </div>
+			</div>
+
+			<div class="prt-setting-article">
+				<div class="txt-article-title">BGM设置</div>
+				<ul class="txt-article-lead">
+					<li>激活后在浏览器失去焦点后继续播放游戏声音</li>
+				</ul>
+				<div class="prt-button-l">
+					<div>
+						<input id="keep-bgm-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'keep-bgm', this.checked)" type="checkbox" value="">
+						<label for="keep-bgm-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">保持BGM播放</label>
 					</div>
         </div>
       </div>
@@ -12125,6 +12139,7 @@ ${extraHtml}
 	};
 
 	const showSub = async src => {
+	  if (!src) return;
 	  hideBox();
 	  const voice = src.replace(/\.[\w\d]+$/, '');
 	  if (!voiceList.includes(voice)) return;
@@ -12341,12 +12356,12 @@ ${extraHtml}
 	  function customOnComplete(state) {
 	    if (state.done) return;
 	    state.done = performance.now();
-	    state.result = this.response || this.responseText;
 	    state.response = this.response;
 	    state.responseType = this.responseType;
 
 	    if (state.responseType === "" || state.responseType === "text") {
 	      state.responseText = this.responseText;
+	      state.result = this.response || this.responseText;
 	    }
 
 	    state.status = this.status;
@@ -12472,6 +12487,16 @@ ${extraHtml}
 	};
 
 	hideSidebar();
+
+	const keepBgm = () => {
+	  if (config.keepBgm) {
+	    window.addEventListener('blur', function (e) {
+	      e.stopImmediatePropagation();
+	    }, false);
+	  }
+	};
+
+	keepBgm();
 
 	/**
 	 * Gets the timestamp of the number of milliseconds that have elapsed since
@@ -12791,7 +12816,7 @@ ${extraHtml}
 	  localStorage.setItem('blhxfy:setting', JSON.stringify(data));
 	};
 
-	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar'], ['trans-jp', 'transJp'], ['trans-en', 'transEn']]);
+	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar'], ['trans-jp', 'transJp'], ['trans-en', 'transEn'], ['keep-bgm', 'keepBgm']]);
 
 	const setting = (type, value) => {
 	  if (type === 'show') {
