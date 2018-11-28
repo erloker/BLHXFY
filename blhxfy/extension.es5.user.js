@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.2.3
+// @version      1.2.4
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -10601,14 +10601,14 @@
       $('#wrapper').off('click.blhxfy-dlcsv').on('click.blhxfy-dlcsv', '.cnt-quest-scene .btn-skip', function () {
         setTimeout(function () {
           if (!document.querySelector('.pop-synopsis')) {
-            window.blhxfy.dlStoryCsv('fill');
+            window.blhx.sendEvent('dlStoryCsv', 'fill');
             downloaded = true;
           }
         }, 100);
       });
       $('#wrapper').off('click.blhxfy-dlcsv2').on('click.blhxfy-dlcsv2', '.pop-synopsis .btn-usual-ok', function () {
         if (!downloaded) {
-          window.blhxfy.dlStoryCsv('fill');
+          window.blhx.sendEvent('dlStoryCsv', 'fill');
         }
       });
     }
@@ -17521,6 +17521,18 @@
       });
     });
   }
+  window.blhx || (window.blhx = {});
+
+  window.blhx.sendEvent = function (name, type, data) {
+    var event = new CustomEvent('blhxfy:message', {
+      detail: {
+        type: type,
+        data: data,
+        name: name
+      }
+    });
+    document.body.dispatchEvent(event);
+  };
 
   var main = function main() {
     if (window.blhxfy) return;

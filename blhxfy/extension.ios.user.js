@@ -8073,14 +8073,14 @@ ${extraHtml}
 	    $('#wrapper').off('click.blhxfy-dlcsv').on('click.blhxfy-dlcsv', '.cnt-quest-scene .btn-skip', function () {
 	      setTimeout(() => {
 	        if (!document.querySelector('.pop-synopsis')) {
-	          window.blhxfy.dlStoryCsv('fill');
+	          window.blhx.sendEvent('dlStoryCsv', 'fill');
 	          downloaded = true;
 	        }
 	      }, 100);
 	    });
 	    $('#wrapper').off('click.blhxfy-dlcsv2').on('click.blhxfy-dlcsv2', '.pop-synopsis .btn-usual-ok', function () {
 	      if (!downloaded) {
-	        window.blhxfy.dlStoryCsv('fill');
+	        window.blhx.sendEvent('dlStoryCsv', 'fill');
 	      }
 	    });
 	  }
@@ -12983,6 +12983,18 @@ ${extraHtml}
 	    });
 	  });
 	}
+	window.blhx || (window.blhx = {});
+
+	window.blhx.sendEvent = function (name, type, data) {
+	  var event = new CustomEvent('blhxfy:message', {
+	    detail: {
+	      type: type,
+	      data: data,
+	      name: name
+	    }
+	  });
+	  document.body.dispatchEvent(event);
+	};
 
 	const main = () => {
 	  if (window.blhxfy) return;
