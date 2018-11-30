@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.0
+// @version      1.3.1
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8362,7 +8362,7 @@
     return str;
   };
 
-  var version = "1.3.0";
+  var version = "1.3.1";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -13357,7 +13357,7 @@
           switch (_context2.prev = _context2.next) {
             case 0:
               lang = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : 'en';
-              source = keyword.replace(/─/g, '—').split('\n');
+              source = keyword.replace(/─/g, '—').replace(/何故/g, 'なぜ').split('\n');
               from = lang === 'en' ? 'en' : 'ja';
               data = {
                 detect: true,

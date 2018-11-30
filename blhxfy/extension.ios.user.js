@@ -5693,7 +5693,7 @@
 	  return str;
 	};
 
-	var version = "1.3.0";
+	var version = "1.3.1";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -10788,7 +10788,7 @@ ${extraHtml}
 	};
 
 	const caiyunTrans = async (keyword, lang = 'en') => {
-	  const source = keyword.replace(/─/g, '—').split('\n');
+	  const source = keyword.replace(/─/g, '—').replace(/何故/g, 'なぜ').split('\n');
 	  const from = lang === 'en' ? 'en' : 'ja';
 	  const data = {
 	    detect: true,
