@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.2.4
+// @version      1.3.0
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -10,6 +10,7 @@
 // @run-at       document-body
 // @grant        GM_xmlhttpRequest
 // @connect      translate.google.cn
+// @connect      api.interpreter.caiyunai.com
 // @updateURL    https://blhx.danmu9.com/blhxfy/extension.es5.user.js
 // @supportURL   https://github.com/biuuu/BLHXFY/issues
 // ==/UserScript==
@@ -8361,6 +8362,8 @@
     return str;
   };
 
+  var version = "1.3.0";
+
   var config = {
     origin: 'https://blhx.danmu9.com',
     apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
@@ -8368,15 +8371,18 @@
     userName: '',
     displayName: '',
     defaultName: '姬塔',
+    defaultEnName: 'Djeeta',
+    transApi: 'caiyun',
     timeout: 8,
     autoDownload: false,
     bottomToolbar: false,
     removeScroller: true,
     hideSidebar: false,
     localHash: '',
-    transJp: false,
+    transJa: true,
     transEn: true,
-    keepBgm: false
+    keepBgm: false,
+    version: version
   };
 
   var getLocalConfig = function getLocalConfig() {
@@ -8390,7 +8396,7 @@
       config.origin = origin.trim();
     }
 
-    var keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar', 'transJp', 'transEn', 'keepBgm'];
+    var keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar', 'transJa', 'transEn', 'keepBgm', 'transApi'];
     keys.forEach(function (key) {
       var value = setting[key];
       if (isString_1(value)) value = filter(value.trim());
@@ -10573,7 +10579,7 @@
     };
   }();
 
-  var template = "\n<style>\n#btn-setting-blhxfy {\n  position: absolute;\n  left: 16px;\n  top: 104px;\n}\n#blhxfy-setting-modal {\n  display: none;\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #f6feff;\n  width: 100%;\n  min-height: 100%;\n  z-index: 99999;\n  padding-bottom: 38px;\n}\n#blhxfy-setting-modal input[type=text] {\n  display: block !important;\n  outline: none;\n  width: 274px;\n  font-size: 12px;\n  padding: 4px;\n  box-shadow: none;\n  border: 1px solid #78bbd8;\n  border-radius: 2px;\n  font-family: sans-serif;\n  color: #4d6671;\n}\n#blhxfy-setting-modal.show {\n  display: block;\n}\n#blhxfy-setting-modal input[type=text]::placeholder {\n  color: #aaa;\n}\n</style>\n<div id=\"blhxfy-setting-modal\">\n<div class=\"cnt-setting\">\n\t<div class=\"prt-setting-header\"><img class=\"img-header\" src=\"https://blhx.danmu9.com/blhxfy/data/static/image/setting-header.jpg\" alt=\"header_public\"></div>\n\n\n\t<div class=\"prt-setting-module\">\n\t\t<div class=\"txt-setting-title\">\u63D2\u4EF6\u8BBE\u7F6E</div>\n\t\t<div class=\"prt-setting-frame\">\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u7FFB\u8BD1\u6570\u636E\u57DF\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u7684\u6570\u636E\u6E90</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"origin-setting-blhxfy\" oninput=\"window.blhxfy.sendEvent('setting', 'origin', this.value)\" type=\"text\" value=\"\" placeholder=\"https://blhx.danmu9.com\">\n        </div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4F7F\u7528\u7B2C\u4E09\u65B9\u6570\u636E\u6E90\u6709\u98CE\u9669\uFF0C\u8BF7\u9009\u62E9\u53EF\u4EE5\u4FE1\u4EFB\u7684\u6570\u636E\u6E90\u3002\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u4E3B\u89D2\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5267\u60C5\u91CC\u663E\u793A\u7684\u4E3B\u89D2\u540D\u5B57\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u4F60\u81EA\u5DF1\u7684\u6635\u79F0</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"username-setting-blhxfy\" oninput=\"window.blhxfy.sendEvent('setting', 'username', this.value)\" type=\"text\" value=\"\" placeholder=\"\u8BF7\u8F93\u5165\u4E3B\u89D2\u540D\">\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u673A\u7FFB\u8BBE\u7F6E</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u4EC5\u5728\u811A\u672C\u901A\u8FC7\u6CB9\u7334\u63D2\u4EF6\u52A0\u8F7D\u65F6\u6709\u6548</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"trans-jp-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'trans-jp', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"trans-jp-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u65E5\u8BED\u673A\u7FFB</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"trans-en-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'trans-en', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"trans-en-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u82F1\u8BED\u673A\u7FFB</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u5267\u60C5CSV\u6587\u4EF6\u5FEB\u6377\u4E0B\u8F7D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728 SKIP \u7684\u65F6\u5019\u81EA\u52A8\u4E0B\u8F7D\u5267\u60C5CSV</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"auto-download-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'auto-download', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"auto-download-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u81EA\u52A8\u4E0B\u8F7DCSV</label>\n\t\t\t\t\t</div>\n        </div>\n\t\t\t</div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">BGM\u8BBE\u7F6E</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728\u6D4F\u89C8\u5668\u5931\u53BB\u7126\u70B9\u540E\u7EE7\u7EED\u64AD\u653E\u6E38\u620F\u58F0\u97F3</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"keep-bgm-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'keep-bgm', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"keep-bgm-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u4FDD\u6301BGM\u64AD\u653E</label>\n\t\t\t\t\t</div>\n        </div>\n      </div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">UI\u8BBE\u7F6E</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u53EF\u4EE5\u9690\u85CFMobage\u4FA7\u8FB9\u680F\uFF08PC\u7F51\u9875\uFF09/\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F\uFF08\u624B\u673A\u6D4F\u89C8\u5668\u4E2D\uFF09</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"remove-scroller-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'remove-scroller', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"remove-scroller-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u6EDA\u52A8\u6761</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"hide-sidebar-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'hide-sidebar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"hide-sidebar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u4FA7\u8FB9\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"bottom-toolbar-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'bottom-toolbar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"bottom-toolbar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u5E95\u90E8\u5DE5\u5177\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n      <div class=\"txt-setting-lead\">\n        \u203B\u4FEE\u6539\u7684\u8BBE\u7F6E\u5728\u5237\u65B0\u9875\u9762\u540E\u751F\u6548\n      </div>\n\t\t</div>\n\t</div>\n\n\t<div class=\"prt-lead-link\">\n\t\t<div class=\"lis-lead-prev\" data-href=\"setting\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u8BBE\u7F6E</div></div>\n\t\t<div class=\"lis-lead-prev\" data-href=\"mypage\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u9996\u9875</div></div>\n\t</div>\n</div>\n</div>\n";
+  var template = "\n<style>\n#btn-setting-blhxfy {\n  position: absolute;\n  left: 16px;\n  top: 104px;\n}\n#blhxfy-setting-modal {\n  display: none;\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #f6feff;\n  width: 100%;\n  min-height: 100%;\n  z-index: 99999;\n  padding-bottom: 38px;\n}\n#blhxfy-setting-modal input[type=text] {\n  display: block !important;\n  outline: none;\n  width: 274px;\n  font-size: 12px;\n  padding: 4px;\n  box-shadow: none;\n  border: 1px solid #78bbd8;\n  border-radius: 2px;\n  font-family: sans-serif;\n  color: #4d6671;\n}\n#blhxfy-setting-modal.show {\n  display: block;\n}\n#blhxfy-setting-modal input[type=text]::placeholder {\n  color: #aaa;\n}\n</style>\n<div id=\"blhxfy-setting-modal\">\n<div class=\"cnt-setting\">\n\t<div class=\"prt-setting-header\"><img class=\"img-header\" src=\"https://blhx.danmu9.com/blhxfy/data/static/image/setting-header.jpg\" alt=\"header_public\"></div>\n\n\n\t<div class=\"prt-setting-module\">\n\t\t<div class=\"txt-setting-title\">\u63D2\u4EF6\u8BBE\u7F6E</div>\n\t\t<div class=\"prt-setting-frame\">\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u7FFB\u8BD1\u6570\u636E\u57DF\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u7684\u6570\u636E\u6E90</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"origin-setting-blhxfy\" oninput=\"window.blhxfy.sendEvent('setting', 'origin', this.value)\" type=\"text\" value=\"\" placeholder=\"https://blhx.danmu9.com\">\n        </div>\n      </div>\n      <div class=\"txt-setting-lead\">\n        \u203B\u4F7F\u7528\u7B2C\u4E09\u65B9\u6570\u636E\u6E90\u6709\u98CE\u9669\uFF0C\u8BF7\u9009\u62E9\u53EF\u4EE5\u4FE1\u4EFB\u7684\u6570\u636E\u6E90\u3002\n      </div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u4E3B\u89D2\u540D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u5267\u60C5\u91CC\u663E\u793A\u7684\u4E3B\u89D2\u540D\u5B57\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u4F60\u81EA\u5DF1\u7684\u6635\u79F0</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n          <input id=\"username-setting-blhxfy\" oninput=\"window.blhxfy.sendEvent('setting', 'username', this.value)\" type=\"text\" value=\"\" placeholder=\"\u8BF7\u8F93\u5165\u4E3B\u89D2\u540D\">\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u673A\u7FFB\u8BBE\u7F6E</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u4EC5\u5728\u811A\u672C\u901A\u8FC7\u6CB9\u7334\u63D2\u4EF6\u52A0\u8F7D\u65F6\u6709\u6548</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"trans-ja-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'trans-ja', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"trans-ja-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u65E5\u8BED\u673A\u7FFB</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"trans-en-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'trans-en', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"trans-en-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u82F1\u8BED\u673A\u7FFB</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"prt-button\">\n\t\t\t\t\t<div class=\"prt-select-box\">\n\t\t\t\t\t\t<div id=\"trans-api-setting-blhxfy-pulldown\" class=\"prt-list-pulldown btn-sort\">\n\t\t\t\t\t\t\t<div id=\"trans-api-setting-blhxfy-txt\" class=\"txt-selected\">\u5F69\u4E91\u5C0F\u8BD1</div>\n\t\t\t\t\t\t\t<select id=\"trans-api-setting-blhxfy\" class=\"frm-list-select\" onchange=\"window.blhxfy.sendEvent('setting', 'trans-api', this.value)\">\n\t\t\t\t\t\t\t\t<option value=\"caiyun\" selected=\"\">\u5F69\u4E91\u5C0F\u8BD1</option>\n\t\t\t\t\t\t\t\t<option value=\"google\">Google\u7FFB\u8BD1</option>\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n      <div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">\u5267\u60C5CSV\u6587\u4EF6\u5FEB\u6377\u4E0B\u8F7D</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728 SKIP \u7684\u65F6\u5019\u81EA\u52A8\u4E0B\u8F7D\u5267\u60C5CSV</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"auto-download-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'auto-download', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"auto-download-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u81EA\u52A8\u4E0B\u8F7DCSV</label>\n\t\t\t\t\t</div>\n        </div>\n\t\t\t</div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">BGM\u8BBE\u7F6E</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u6FC0\u6D3B\u540E\u5728\u6D4F\u89C8\u5668\u5931\u53BB\u7126\u70B9\u540E\u7EE7\u7EED\u64AD\u653E\u6E38\u620F\u58F0\u97F3</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button-l\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"keep-bgm-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'keep-bgm', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"keep-bgm-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u4FDD\u6301BGM\u64AD\u653E</label>\n\t\t\t\t\t</div>\n        </div>\n      </div>\n\n\t\t\t<div class=\"prt-setting-article\">\n\t\t\t\t<div class=\"txt-article-title\">UI\u8BBE\u7F6E</div>\n\t\t\t\t<ul class=\"txt-article-lead\">\n\t\t\t\t\t<li>\u53EF\u4EE5\u9690\u85CFMobage\u4FA7\u8FB9\u680F\uFF08PC\u7F51\u9875\uFF09/\u663E\u793A\u5E95\u90E8\u5DE5\u5177\u680F\uFF08\u624B\u673A\u6D4F\u89C8\u5668\u4E2D\uFF09</li>\n\t\t\t\t</ul>\n\t\t\t\t<div class=\"prt-button\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"remove-scroller-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'remove-scroller', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"remove-scroller-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u6EDA\u52A8\u6761</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"hide-sidebar-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'hide-sidebar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"hide-sidebar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u9690\u85CF\u4FA7\u8FB9\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<input id=\"bottom-toolbar-setting-blhxfy\" onchange=\"window.blhxfy.sendEvent('setting', 'bottom-toolbar', this.checked)\" type=\"checkbox\" value=\"\">\n\t\t\t\t\t\t<label for=\"bottom-toolbar-setting-blhxfy\" class=\"btn-usual-setting-new adjust-font-s\">\u5E95\u90E8\u5DE5\u5177\u680F</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n      <div class=\"txt-setting-lead\">\n        \u203B\u4FEE\u6539\u7684\u8BBE\u7F6E\u5728\u5237\u65B0\u9875\u9762\u540E\u751F\u6548\n      </div>\n\t\t</div>\n\t</div>\n\n\t<div class=\"prt-lead-link\">\n\t\t<div class=\"lis-lead-prev\" data-href=\"setting\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u8BBE\u7F6E</div></div>\n\t\t<div class=\"lis-lead-prev\" data-href=\"mypage\"><div class=\"atx-lead-link\">\u8FD4\u56DE\u9996\u9875</div></div>\n\t</div>\n</div>\n</div>\n";
   function insertSettingHtml (html) {
     return html.replace('<div class="cnt-setting">', "".concat(template, "<div class=\"cnt-setting\"><div class=\"cnt-setting\"><div class=\"btn-usual-text\" id=\"btn-setting-blhxfy\" onclick=\"window.blhxfy.sendEvent('setting', 'show')\">\u6C49\u5316\u63D2\u4EF6\u8BBE\u7F6E</div>"));
   }
@@ -13333,6 +13339,109 @@
     };
   }();
 
+  var caiyunTrans =
+  /*#__PURE__*/
+  function () {
+    var _ref2 = _asyncToGenerator(
+    /*#__PURE__*/
+    regeneratorRuntime.mark(function _callee2(keyword) {
+      var lang,
+          source,
+          from,
+          data,
+          res,
+          txt,
+          _args2 = arguments;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              lang = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : 'en';
+              source = keyword.replace(/─/g, '—').split('\n');
+              from = lang === 'en' ? 'en' : 'ja';
+              data = {
+                detect: true,
+                media: 'text',
+                request_id: 'web_fanyi',
+                trans_type: "".concat(from, "2zh"),
+                source: source
+              };
+              _context2.prev = 4;
+              _context2.next = 7;
+              return request('https://api.interpreter.caiyunai.com/v1/translator', {
+                data: JSON.stringify(data),
+                method: 'POST',
+                headers: {
+                  'accept': '*/*',
+                  'content-type': 'application/json',
+                  'referer': 'http://www.caiyunapp.com',
+                  'origin': 'http://www.caiyunapp.com',
+                  'X-Authorization': 'token cy4fgbil24jucmh8jfr5'
+                }
+              });
+
+            case 7:
+              res = _context2.sent;
+              txt = res.target.join('\n');
+              return _context2.abrupt("return", txt.replace(/姬塔们/g, '姬塔一行'));
+
+            case 12:
+              _context2.prev = 12;
+              _context2.t0 = _context2["catch"](4);
+              console.error("".concat(_context2.t0.message, "\n").concat(_context2.t0.stack));
+              return _context2.abrupt("return", '');
+
+            case 16:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this, [[4, 12]]);
+    }));
+
+    return function caiyunTrans(_x2) {
+      return _ref2.apply(this, arguments);
+    };
+  }();
+
+  function transApi () {
+    return _ref3.apply(this, arguments);
+  }
+
+  function _ref3() {
+    _ref3 = _asyncToGenerator(
+    /*#__PURE__*/
+    regeneratorRuntime.mark(function _callee3() {
+      var _args3 = arguments;
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              if (!(config.transApi === 'caiyun')) {
+                _context3.next = 4;
+                break;
+              }
+
+              return _context3.abrupt("return", caiyunTrans.apply(void 0, _args3));
+
+            case 4:
+              if (!(config.transApi === 'google')) {
+                _context3.next = 6;
+                break;
+              }
+
+              return _context3.abrupt("return", googleTrans.apply(void 0, _args3));
+
+            case 6:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this);
+    }));
+    return _ref3.apply(this, arguments);
+  }
+
   var txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
   var WORDS_LIMIT = 4500;
   var scenarioCache = {
@@ -13419,20 +13528,27 @@
               return Promise.all(txtStr.map(function (txt) {
                 txt = removeHtmlTag(txt);
 
-                if (lang === 'en') {
-                  txt = replaceWords(txt, nameMap, lang);
+                if (config.transApi === 'google') {
+                  if (lang === 'en') {
+                    txt = replaceWords(txt, nameMap, lang);
+                  }
+
+                  txt = replaceWords(txt, nounMap, lang);
                 }
 
-                txt = replaceWords(txt, nounMap, lang);
-
-                if (userName && lang === 'en') {
+                if (userName) {
                   var _lang = lang;
                   if (!/^\w+$/.test(userName)) _lang = 'unknown';
-                  txt = replaceWords(txt, new Map([[userName, config.defaultName]]), _lang);
+
+                  if (lang === 'en') {
+                    txt = replaceWords(txt, new Map([[userName, config.defaultEnName]]), _lang);
+                  } else {
+                    txt = replaceWords(txt, new Map([[userName, config.defaultName]]), _lang);
+                  }
                 }
 
                 var targetLang = config.lang !== 'hant' ? 'zh-CN' : 'zh-TW';
-                return googleTrans(txt, lang, targetLang);
+                return transApi(txt, lang, targetLang);
               }));
 
             case 9:
@@ -13441,8 +13557,14 @@
                 var _str = str;
 
                 if (str) {
-                  if (userName) {
-                    _str = _str.replace(new RegExp(config.defaultName, 'g'), userName);
+                  if (config.displayName || userName) {
+                    var name = config.displayName || userName;
+
+                    if (lang === 'en') {
+                      _str = _str.replace(new RegExp(config.defaultEnName, 'g'), name);
+                    } else {
+                      _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
+                    }
                   }
 
                   var _iteratorNormalCompletion = true;
@@ -13686,7 +13808,7 @@
     var _ref3 = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee3(data, pathname) {
-      var pathRst, sNameTemp, rst, scenarioName, _ref4, transMap, csv, nameData, nameMap, _ref5, nounMap, nounFixMap, _collectTxt, txtList, infoList, transList;
+      var pathRst, sNameTemp, rst, scenarioName, _ref4, transMap, csv, nameData, nameMap, _ref5, nounMap, nounFixMap, _collectTxt, txtList, infoList, transList, transNotice, transApiName, apiData;
 
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -13745,12 +13867,12 @@
               scenarioCache.nameMap = nameMap;
 
               if (transMap) {
-                _context3.next = 44;
+                _context3.next = 47;
                 break;
               }
 
-              if (!(config.transJp && Game.lang === 'ja' || config.transEn && Game.lang === 'en')) {
-                _context3.next = 41;
+              if (!(config.transJa && Game.lang === 'ja' || config.transEn && Game.lang === 'en')) {
+                _context3.next = 44;
                 break;
               }
 
@@ -13768,27 +13890,39 @@
 
             case 37:
               transList = _context3.sent;
+              transNotice = false;
+              transApiName = {
+                google: ['Google翻译', 'https://translate.google.cn'],
+                caiyun: ['彩云小译', 'http://www.caiyunapp.com/fanyi/']
+              };
+              apiData = transApiName[config.transApi];
               infoList.forEach(function (info, index) {
                 var obj = transMap.get(info.id) || {};
                 obj[info.type] = transList[index] || '';
+
+                if (!transNotice && info.type === 'detail' && obj[info.type]) {
+                  obj[info.type] = "<span class='scene-font-katari'>\uFF08\u672C\u8282\u7531<a target=\"_blank\" style=\"color:#9ccd4e\" href=\"".concat(apiData[1], "\">").concat(apiData[0], "</a>\u673A\u7FFB\uFF09</span><br>").concat(obj[info.type]);
+                  transNotice = true;
+                }
+
                 transMap.set(info.id, obj);
               });
-              _context3.next = 42;
-              break;
-
-            case 41:
-              return _context3.abrupt("return", data);
-
-            case 42:
-              _context3.next = 47;
+              _context3.next = 45;
               break;
 
             case 44:
+              return _context3.abrupt("return", data);
+
+            case 45:
+              _context3.next = 50;
+              break;
+
+            case 47:
               scenarioCache.hasTrans = true;
               scenarioCache.csv = csv;
               scenarioCache.transMap = transMap;
 
-            case 47:
+            case 50:
               data.forEach(function (item) {
                 var name1, name2, name3;
                 name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -13804,7 +13938,7 @@
               });
               return _context3.abrupt("return", data);
 
-            case 49:
+            case 52:
             case "end":
               return _context3.stop();
           }
@@ -16943,6 +17077,20 @@
     };
   };
 
+  // 22.1.3.8 Array.prototype.find(predicate, thisArg = undefined)
+
+  var $find = _arrayMethods(5);
+  var KEY = 'find';
+  var forced = true;
+  // Shouldn't skip holes
+  if (KEY in []) Array(1)[KEY](function () { forced = false; });
+  _export(_export.P + _export.F * forced, 'Array', {
+    find: function find(callbackfn /* , that = undefined */) {
+      return $find(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+  _addToUnscopables(KEY);
+
   var addToolbar = function addToolbar() {
     if (config.bottomToolbar) {
       document.addEventListener('DOMContentLoaded', function () {
@@ -17307,7 +17455,7 @@
     localStorage.setItem('blhxfy:setting', JSON.stringify(data));
   };
 
-  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar'], ['trans-jp', 'transJp'], ['trans-en', 'transEn'], ['keep-bgm', 'keepBgm']]);
+  var keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar'], ['trans-ja', 'transJa'], ['trans-en', 'transEn'], ['keep-bgm', 'keepBgm'], ['trans-api', 'transApi']]);
 
   var setting = function setting(type, value) {
     if (type === 'show') {
@@ -17325,6 +17473,10 @@
 
           if (ipt.attr('type') === 'checkbox') {
             ipt[0].checked = config[key];
+          } else if (ipt[0].tagName.toUpperCase() === 'SELECT') {
+            ipt.val(config[key]);
+            var text = ipt.find('option:selected').text();
+            $("#".concat(id, "-setting-blhxfy-txt")).text(text);
           } else {
             ipt.val(config[key]);
           }
@@ -17354,6 +17506,12 @@
         });
       });
     } else {
+      if (type === 'trans-api') {
+        var _text = $('#trans-api-setting-blhxfy').find('option:selected').text();
+
+        $('#trans-api-setting-blhxfy-txt').text(_text);
+      }
+
       saveToLocalstorage(keyMap.get(type), value);
     }
   };
@@ -17534,12 +17692,12 @@
     document.body.dispatchEvent(event);
   };
 
-  var main = function main() {
+  var main$1 = function main() {
     if (window.blhxfy) return;
     eventMessage();
     injectXHR();
   };
 
-  main();
+  main$1();
 
 }());
