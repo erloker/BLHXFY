@@ -5693,8 +5693,6 @@
 	  return str;
 	};
 
-	var version = "1.3.1";
-
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
 	  apiHosts: ['game.granbluefantasy.jp', 'gbf.game.mbga.jp'],
@@ -5702,18 +5700,15 @@
 	  userName: '',
 	  displayName: '',
 	  defaultName: '姬塔',
-	  defaultEnName: 'Djeeta',
-	  transApi: 'caiyun',
 	  timeout: 8,
 	  autoDownload: false,
 	  bottomToolbar: false,
 	  removeScroller: true,
 	  hideSidebar: false,
 	  localHash: '',
-	  transJa: true,
+	  transJp: false,
 	  transEn: true,
-	  keepBgm: false,
-	  version: version
+	  keepBgm: false
 	};
 
 	const getLocalConfig = () => {
@@ -5728,7 +5723,7 @@
 	    config.origin = origin.trim();
 	  }
 
-	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar', 'transJa', 'transEn', 'keepBgm', 'transApi'];
+	  const keys = ['autoDownload', 'bottomToolbar', 'displayName', 'removeScroller', 'hideSidebar', 'transJp', 'transEn', 'keepBgm'];
 	  keys.forEach(key => {
 	    let value = setting[key];
 	    if (isString_1(value)) value = filter(value.trim());
@@ -7839,23 +7834,12 @@
 				</ul>
 				<div class="prt-button">
 					<div>
-						<input id="trans-ja-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'trans-ja', this.checked)" type="checkbox" value="">
-						<label for="trans-ja-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">日语机翻</label>
+						<input id="trans-jp-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'trans-jp', this.checked)" type="checkbox" value="">
+						<label for="trans-jp-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">日语机翻</label>
 					</div>
 					<div>
 						<input id="trans-en-setting-blhxfy" onchange="window.blhxfy.sendEvent('setting', 'trans-en', this.checked)" type="checkbox" value="">
 						<label for="trans-en-setting-blhxfy" class="btn-usual-setting-new adjust-font-s">英语机翻</label>
-					</div>
-				</div>
-				<div class="prt-button">
-					<div class="prt-select-box">
-						<div id="trans-api-setting-blhxfy-pulldown" class="prt-list-pulldown btn-sort">
-							<div id="trans-api-setting-blhxfy-txt" class="txt-selected">彩云小译</div>
-							<select id="trans-api-setting-blhxfy" class="frm-list-select" onchange="window.blhxfy.sendEvent('setting', 'trans-api', this.value)">
-								<option value="caiyun" selected="">彩云小译</option>
-								<option value="google">Google翻译</option>
-							</select>
-						</div>
 					</div>
 				</div>
 			</div>
@@ -10787,45 +10771,6 @@ ${extraHtml}
 	  }
 	};
 
-	const caiyunTrans = async (keyword, lang = 'en') => {
-	  const source = keyword.replace(/─/g, '—').replace(/何故/g, 'なぜ').split('\n');
-	  const from = lang === 'en' ? 'en' : 'ja';
-	  const data = {
-	    detect: true,
-	    media: 'text',
-	    request_id: 'web_fanyi',
-	    trans_type: `${from}2zh`,
-	    source
-	  };
-
-	  try {
-	    const res = await request('https://api.interpreter.caiyunai.com/v1/translator', {
-	      data: JSON.stringify(data),
-	      method: 'POST',
-	      headers: {
-	        'accept': '*/*',
-	        'content-type': 'application/json',
-	        'referer': 'http://www.caiyunapp.com',
-	        'origin': 'http://www.caiyunapp.com',
-	        'X-Authorization': 'token cy4fgbil24jucmh8jfr5'
-	      }
-	    });
-	    const txt = res.target.join('\n');
-	    return txt.replace(/姬塔们/g, '姬塔一行');
-	  } catch (err) {
-	    console.error(`${err.message}\n${err.stack}`);
-	    return '';
-	  }
-	};
-
-	async function transApi (...args) {
-	  if (config.transApi === 'caiyun') {
-	    return caiyunTrans(...args);
-	  } else if (config.transApi === 'google') {
-	    return googleTrans(...args);
-	  }
-	}
-
 	const txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
 	const WORDS_LIMIT = 4500;
 	const scenarioCache = {
@@ -10899,40 +10844,27 @@ ${extraHtml}
 	  const transStr = await Promise.all(txtStr.map(txt => {
 	    txt = removeHtmlTag(txt);
 
-	    if (config.transApi === 'google') {
-	      if (lang === 'en') {
-	        txt = replaceWords(txt, nameMap, lang);
-	      }
-
-	      txt = replaceWords(txt, nounMap, lang);
+	    if (lang === 'en') {
+	      txt = replaceWords(txt, nameMap, lang);
 	    }
 
-	    if (userName) {
+	    txt = replaceWords(txt, nounMap, lang);
+
+	    if (userName && lang === 'en') {
 	      let _lang = lang;
 	      if (!/^\w+$/.test(userName)) _lang = 'unknown';
-
-	      if (lang === 'en') {
-	        txt = replaceWords(txt, new Map([[userName, config.defaultEnName]]), _lang);
-	      } else {
-	        txt = replaceWords(txt, new Map([[userName, config.defaultName]]), _lang);
-	      }
+	      txt = replaceWords(txt, new Map([[userName, config.defaultName]]), _lang);
 	    }
 
 	    const targetLang = config.lang !== 'hant' ? 'zh-CN' : 'zh-TW';
-	    return transApi(txt, lang, targetLang);
+	    return googleTrans(txt, lang, targetLang);
 	  }));
 	  return transStr.reduce((result, str) => {
 	    let _str = str;
 
 	    if (str) {
-	      if (config.displayName || userName) {
-	        const name = config.displayName || userName;
-
-	        if (lang === 'en') {
-	          _str = _str.replace(new RegExp(config.defaultEnName, 'g'), name);
-	        } else {
-	          _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
-	        }
+	      if (userName) {
+	        _str = _str.replace(new RegExp(config.defaultName, 'g'), userName);
 	      }
 
 	      for (let [text, fix] of nounFixMap) {
@@ -11103,7 +11035,7 @@ ${extraHtml}
 	  scenarioCache.nameMap = nameMap;
 
 	  if (!transMap) {
-	    if (config.transJa && Game.lang === 'ja' || config.transEn && Game.lang === 'en') {
+	    if (config.transJp && Game.lang === 'ja' || config.transEn && Game.lang === 'en') {
 	      const {
 	        nounMap,
 	        nounFixMap
@@ -11114,21 +11046,9 @@ ${extraHtml}
 	        infoList
 	      } = collectTxt(data);
 	      const transList = await transMulti(txtList, nameMap, nounMap, nounFixMap);
-	      let transNotice = false;
-	      const transApiName = {
-	        google: ['Google翻译', 'https://translate.google.cn'],
-	        caiyun: ['彩云小译', 'http://www.caiyunapp.com/fanyi/']
-	      };
-	      const apiData = transApiName[config.transApi];
 	      infoList.forEach((info, index) => {
 	        const obj = transMap.get(info.id) || {};
 	        obj[info.type] = transList[index] || '';
-
-	        if (!transNotice && info.type === 'detail' && obj[info.type]) {
-	          obj[info.type] = `（本节由<a target="_blank" style="color:#9ccd4e" href="${apiData[1]}">${apiData[0]}</a>机翻）<br>${obj[info.type]}`;
-	          transNotice = true;
-	        }
-
 	        transMap.set(info.id, obj);
 	      });
 	    } else {
@@ -12881,7 +12801,7 @@ ${extraHtml}
 	  localStorage.setItem('blhxfy:setting', JSON.stringify(data));
 	};
 
-	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar'], ['trans-ja', 'transJa'], ['trans-en', 'transEn'], ['keep-bgm', 'keepBgm'], ['trans-api', 'transApi']]);
+	const keyMap = new Map([['origin', 'origin'], ['auto-download', 'autoDownload'], ['bottom-toolbar', 'bottomToolbar'], ['username', 'displayName'], ['remove-scroller', 'removeScroller'], ['hide-sidebar', 'hideSidebar'], ['trans-jp', 'transJp'], ['trans-en', 'transEn'], ['keep-bgm', 'keepBgm']]);
 
 	const setting = (type, value) => {
 	  if (type === 'show') {
@@ -12890,10 +12810,6 @@ ${extraHtml}
 
 	      if (ipt.attr('type') === 'checkbox') {
 	        ipt[0].checked = config[key];
-	      } else if (ipt[0].tagName.toUpperCase() === 'SELECT') {
-	        ipt.val(config[key]);
-	        const text = ipt.find('option:selected').text();
-	        $(`#${id}-setting-blhxfy-txt`).text(text);
 	      } else {
 	        ipt.val(config[key]);
 	      }
@@ -12909,11 +12825,6 @@ ${extraHtml}
 	      });
 	    });
 	  } else {
-	    if (type === 'trans-api') {
-	      const text = $('#trans-api-setting-blhxfy').find('option:selected').text();
-	      $('#trans-api-setting-blhxfy-txt').text(text);
-	    }
-
 	    saveToLocalstorage(keyMap.get(type), value);
 	  }
 	};
@@ -13085,12 +12996,12 @@ ${extraHtml}
 	  document.body.dispatchEvent(event);
 	};
 
-	const main$1 = () => {
+	const main = () => {
 	  if (window.blhxfy) return;
 	  eventMessage();
 	  injectXHR();
 	};
 
-	main$1();
+	main();
 
 }());
