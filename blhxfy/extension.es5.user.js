@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.1
+// @version      1.3.2
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8362,7 +8362,7 @@
     return str;
   };
 
-  var version = "1.3.1";
+  var version = "1.3.2";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -10552,7 +10552,7 @@
               });
               sortKeywords(listNounFix, 'text').forEach(function (item) {
                 var text = trim(item.text);
-                var fix = filter(trim(item.fix));
+                var fix = filter(trim(item.fixed));
 
                 if (text && fix) {
                   nounFixMap.set(text, fix);
@@ -13383,7 +13383,7 @@
             case 7:
               res = _context2.sent;
               txt = res.target.join('\n');
-              return _context2.abrupt("return", txt.replace(/姬塔们/g, '姬塔一行'));
+              return _context2.abrupt("return", txt);
 
             case 12:
               _context2.prev = 12;
@@ -13557,16 +13557,6 @@
                 var _str = str;
 
                 if (str) {
-                  if (config.displayName || userName) {
-                    var name = config.displayName || userName;
-
-                    if (lang === 'en') {
-                      _str = _str.replace(new RegExp(config.defaultEnName, 'g'), name);
-                    } else {
-                      _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
-                    }
-                  }
-
                   var _iteratorNormalCompletion = true;
                   var _didIteratorError = false;
                   var _iteratorError = undefined;
@@ -13591,6 +13581,16 @@
                       if (_didIteratorError) {
                         throw _iteratorError;
                       }
+                    }
+                  }
+
+                  if (config.displayName || userName) {
+                    var name = config.displayName || userName;
+
+                    if (lang === 'en') {
+                      _str = _str.replace(new RegExp(config.defaultEnName, 'g'), name);
+                    } else {
+                      _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
                     }
                   }
 

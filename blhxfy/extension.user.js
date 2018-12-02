@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.1
+// @version      1.3.2
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5709,7 +5709,7 @@
 	  return str;
 	};
 
-	var version = "1.3.1";
+	var version = "1.3.2";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -7765,7 +7765,7 @@
 	    });
 	    sortKeywords(listNounFix, 'text').forEach(item => {
 	      const text = trim(item.text);
-	      const fix = filter(trim(item.fix));
+	      const fix = filter(trim(item.fixed));
 
 	      if (text && fix) {
 	        nounFixMap.set(text, fix);
@@ -10827,7 +10827,7 @@ ${extraHtml}
 	      }
 	    });
 	    const txt = res.target.join('\n');
-	    return txt.replace(/姬塔们/g, '姬塔一行');
+	    return txt;
 	  } catch (err) {
 	    console.error(`${err.message}\n${err.stack}`);
 	    return '';
@@ -10941,6 +10941,10 @@ ${extraHtml}
 	    let _str = str;
 
 	    if (str) {
+	      for (let [text, fix] of nounFixMap) {
+	        _str = _str.replace(new RegExp(text, 'g'), fix);
+	      }
+
 	      if (config.displayName || userName) {
 	        const name = config.displayName || userName;
 
@@ -10949,10 +10953,6 @@ ${extraHtml}
 	        } else {
 	          _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
 	        }
-	      }
-
-	      for (let [text, fix] of nounFixMap) {
-	        _str = _str.replace(new RegExp(text, 'g'), fix);
 	      }
 
 	      return result.concat(_str.split('\n'));
