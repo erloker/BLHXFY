@@ -5693,7 +5693,7 @@
 	  return str;
 	};
 
-	var version = "1.3.2";
+	var version = "1.3.3";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -12260,7 +12260,7 @@ ${extraHtml}
 	      req.fetch();
 	    });
 
-	    config.userName = '姬塔';
+	    config.userName = '古兰';
 	    localStorage.setItem('blhxfy:name', config.userName);
 	  }
 	};
