@@ -58,7 +58,7 @@ id,name,text,trans
 82,Sevastien/塞瓦斯提安,"As a member of the order, it is one of my deepest regrets.",作为圣骑士团的一员，我深感遗憾。
 83,Elder/老人,"It's a waste of time crying over ""what-ifs."" The fact is it happened the way it did.",往事已经发生了，遗憾也没有什么意义了。
 84,Sevastien/塞瓦斯提安,Right you are. But what stands out to me is the aftermath of this all.,如您所说，不过，我关心的是在那之后的事情……
-85,Sevastien/塞瓦斯提安,Corwell's collection of demon blades and magic swords followed his ship to the bottom of the sky.,克洛威尔收集的妖刀的魔剑，和他的骑空艇一起坠落到天空的底部了。
+85,Sevastien/塞瓦斯提安,Corwell's collection of demon blades and magic swords followed his ship to the bottom of the sky.,克洛威尔收集的妖刀和魔剑，和他的骑空艇一起坠落到天空的底部了。
 86,Sevastien/塞瓦斯提安,The only solace I can take from the result of this incident is that those weapons won't be able to claim any new victims.,那些武器不会再次为祸世间，或许也是值得高兴的成果吧。
 87,Elder/老人,I pray you are right on that matter.,我也希望是这样的。
 88,,Sevastien offers final words of thanks. The holy knights lift Corwell's coffin and leave the estate.,塞瓦斯提安向老人表达了最后的谢意，随后圣骑士团和克洛威尔的棺材一起离开了宅邸。
@@ -75,7 +75,7 @@ id,name,text,trans
 113,Keralbarra/库拉芭拉,Brother...,哥哥。
 114,Sevilbarra/萨比尔巴拉,Yes?,嗯？怎么了？
 115,Keralbarra/库拉芭拉,"Once I'm wed, I worry that there'll be no one to nag you.",我担心自己嫁人以后，就没有人照顾哥哥了。
-116,Keralbarra/库拉芭拉,Do you or your disciples know how to cook? Can you do your own laundry? Do you know how to use dried seaweed? And you can't put off cleaning the dojo—,你能给弟子们做饭吗？能洗衣服吗？知道怎么用干海草吗？还得打扫道场，还有……
+116,Keralbarra/库拉芭拉,Do you or your disciples know how to cook? Can you do your own laundry? Do you know how to use dried seaweed? And you can't put off cleaning the dojo—,你能给弟子们做饭吗？能洗衣服吗？紫菜的制作方法知道吗？还得打扫道场，还有……
 117,Sevilbarra/萨比尔巴拉,Hahaha! On the contrary it's going to be fun not having a fusspot around.,哈哈哈哈，没有你在我身边说这说那，说不定我还挺开心呢！
 118,Sevilbarra/萨比尔巴拉,"Krelkulkil's in for the ride of his life. He's a nice guy, which is why I think he'll have his work cut out for him.",卡拉库拉奇尔以后一定会很辛苦的，那家伙说不定因为善良而比我更辛苦呢！
 119,Keralbarra/库拉芭拉,"Come on, Brother. Why are you always so flippant!",真是，老哥到这个时候了，还在油嘴滑舌的！
@@ -88,11 +88,10 @@ id,name,text,trans
 126,Keralbarra/库拉芭拉,Thank you!,嗯！
 132,Sevilbarra/萨比尔巴拉,"Good fortune, huh?",幸运，吗。
 133,Sevilbarra/萨比尔巴拉,...,……
-134,Sevilbarra/萨比尔巴拉,"Hey, Keralbarra. Did you know there's another meaning behind white clovers?",库拉芭拉，白诘草的花语，其实还有一个……
+134,Sevilbarra/萨比尔巴拉,"Hey, Keralbarra. Did you know there's another meaning behind white clovers?",库拉芭拉，白诘草的话语，其实还有一个……
 135,Sevilbarra/萨比尔巴拉,It's quite different from fortune. And that would be...,那就是……那是……
 136,Sevilbarra/萨比尔巴拉,Revenge.,“复仇”……
 142,,A few words offered to a dearly departed sister are delivered on the updrafts stirred by the Grandcypher as it flies through the sky.,对逝去的妹妹所说的低吟，卷入飞翔的格兰赛法周围的风中。
 143,,"Sullen snow, innocent and pure, falls from sorrowful clouds of winter, paving the way to the future in white.",悲伤的雪花飞舞着，从冷冬的阴云中旋转而出，将未来的路隐藏在纯白之中。
 145,,The End,结局。
 info,,,scene_evt181130_cp0_q2_s10
-,,,
