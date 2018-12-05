@@ -5693,7 +5693,7 @@
 	  return str;
 	};
 
-	var version = "1.3.3";
+	var version = "1.3.4";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -11837,14 +11837,15 @@ ${extraHtml}
 	  return _html;
 	};
 
-	async function transHTML(data, pathname) {
-	  if (!data.data) return data;
+	let settingHtml = false;
+
+	const getHtml = async (encodedHtml, pathname) => {
 	  let html;
 
 	  try {
-	    html = decodeURIComponent(data.data);
+	    html = decodeURIComponent(encodedHtml);
 	  } catch (err) {
-	    return data;
+	    return encodedHtml;
 	  }
 
 	  try {
@@ -11857,11 +11858,33 @@ ${extraHtml}
 	    console.error(err);
 	  }
 
-	  if (pathname.includes('/setting/content/index/index')) {
+	  if (!settingHtml && pathname.includes('/setting/content/index/index')) {
 	    html = insertSettingHtml(html);
+	    settingHtml = true;
 	  }
 
-	  data.data = encodeURIComponent(html);
+	  return encodeURIComponent(html);
+	};
+
+	async function transHTML(data, pathname) {
+	  if (data.data) {
+	    data.data = await getHtml(data.data, pathname);
+	  }
+
+	  if (data.option && data.option.progress) {
+	    data.option.progress = await getHtml(data.option.progress, pathname);
+	  }
+
+	  if (data.option && data.option.quest) {
+	    if (data.option.quest.content__index) {
+	      data.option.quest.content__index = await getHtml(data.option.quest.content__index, pathname);
+	    }
+
+	    if (data.option.quest.content_list) {
+	      data.option.quest.content_list = await getHtml(data.option.quest.content_list, pathname);
+	    }
+	  }
+
 	  return data;
 	}
 

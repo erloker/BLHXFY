@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.3
+// @version      1.3.4
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8362,7 +8362,7 @@
     return str;
   };
 
-  var version = "1.3.3";
+  var version = "1.3.4";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -15819,83 +15819,155 @@
     };
   }();
 
-  function transHTML(_x4, _x5) {
+  var settingHtml = false;
+
+  var getHtml =
+  /*#__PURE__*/
+  function () {
+    var _ref3 = _asyncToGenerator(
+    /*#__PURE__*/
+    regeneratorRuntime.mark(function _callee3(encodedHtml, pathname) {
+      var html;
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              _context3.prev = 0;
+              html = decodeURIComponent(encodedHtml);
+              _context3.next = 7;
+              break;
+
+            case 4:
+              _context3.prev = 4;
+              _context3.t0 = _context3["catch"](0);
+              return _context3.abrupt("return", encodedHtml);
+
+            case 7:
+              _context3.prev = 7;
+
+              if (!pathname.includes('/archive/content/library/')) {
+                _context3.next = 14;
+                break;
+              }
+
+              _context3.next = 11;
+              return replaceArchive(html);
+
+            case 11:
+              html = _context3.sent;
+              _context3.next = 17;
+              break;
+
+            case 14:
+              _context3.next = 16;
+              return replaceHTML(html, pathname);
+
+            case 16:
+              html = _context3.sent;
+
+            case 17:
+              _context3.next = 22;
+              break;
+
+            case 19:
+              _context3.prev = 19;
+              _context3.t1 = _context3["catch"](7);
+              console.error(_context3.t1);
+
+            case 22:
+              if (!settingHtml && pathname.includes('/setting/content/index/index')) {
+                html = insertSettingHtml(html);
+                settingHtml = true;
+              }
+
+              return _context3.abrupt("return", encodeURIComponent(html));
+
+            case 24:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this, [[0, 4], [7, 19]]);
+    }));
+
+    return function getHtml(_x4, _x5) {
+      return _ref3.apply(this, arguments);
+    };
+  }();
+
+  function transHTML(_x6, _x7) {
     return _transHTML.apply(this, arguments);
   }
 
   function _transHTML() {
     _transHTML = _asyncToGenerator(
     /*#__PURE__*/
-    regeneratorRuntime.mark(function _callee3(data, pathname) {
-      var html;
-      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+    regeneratorRuntime.mark(function _callee4(data, pathname) {
+      return regeneratorRuntime.wrap(function _callee4$(_context4) {
         while (1) {
-          switch (_context3.prev = _context3.next) {
+          switch (_context4.prev = _context4.next) {
             case 0:
-              if (data.data) {
-                _context3.next = 2;
+              if (!data.data) {
+                _context4.next = 4;
                 break;
               }
 
-              return _context3.abrupt("return", data);
+              _context4.next = 3;
+              return getHtml(data.data, pathname);
 
-            case 2:
-              _context3.prev = 2;
-              html = decodeURIComponent(data.data);
-              _context3.next = 9;
-              break;
+            case 3:
+              data.data = _context4.sent;
 
-            case 6:
-              _context3.prev = 6;
-              _context3.t0 = _context3["catch"](2);
-              return _context3.abrupt("return", data);
-
-            case 9:
-              _context3.prev = 9;
-
-              if (!pathname.includes('/archive/content/library/')) {
-                _context3.next = 16;
+            case 4:
+              if (!(data.option && data.option.progress)) {
+                _context4.next = 8;
                 break;
               }
 
-              _context3.next = 13;
-              return replaceArchive(html);
+              _context4.next = 7;
+              return getHtml(data.option.progress, pathname);
+
+            case 7:
+              data.option.progress = _context4.sent;
+
+            case 8:
+              if (!(data.option && data.option.quest)) {
+                _context4.next = 17;
+                break;
+              }
+
+              if (!data.option.quest.content__index) {
+                _context4.next = 13;
+                break;
+              }
+
+              _context4.next = 12;
+              return getHtml(data.option.quest.content__index, pathname);
+
+            case 12:
+              data.option.quest.content__index = _context4.sent;
 
             case 13:
-              html = _context3.sent;
-              _context3.next = 19;
-              break;
-
-            case 16:
-              _context3.next = 18;
-              return replaceHTML(html, pathname);
-
-            case 18:
-              html = _context3.sent;
-
-            case 19:
-              _context3.next = 24;
-              break;
-
-            case 21:
-              _context3.prev = 21;
-              _context3.t1 = _context3["catch"](9);
-              console.error(_context3.t1);
-
-            case 24:
-              if (pathname.includes('/setting/content/index/index')) {
-                html = insertSettingHtml(html);
+              if (!data.option.quest.content_list) {
+                _context4.next = 17;
+                break;
               }
 
-              data.data = encodeURIComponent(html);
-              return _context3.abrupt("return", data);
+              _context4.next = 16;
+              return getHtml(data.option.quest.content_list, pathname);
 
-            case 27:
+            case 16:
+              data.option.quest.content_list = _context4.sent;
+
+            case 17:
+              return _context4.abrupt("return", data);
+
+            case 18:
             case "end":
-              return _context3.stop();
+              return _context4.stop();
           }
         }
-      }, _callee3, this, [[2, 6], [9, 21]]);
+      }, _callee4, this);
     }));
     return _transHTML.apply(this, arguments);
   }
