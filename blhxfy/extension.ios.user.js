@@ -5693,7 +5693,7 @@
 	  return str;
 	};
 
-	var version = "1.3.4";
+	var version = "1.3.5";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -12585,6 +12585,10 @@ ${extraHtml}
 	};
 
 	keepBgm();
+
+	window.addEventListener('load', function () {
+	  $('.prt-global-ext .prt-config-balloon').html('感觉卡顿的时候，可以通过调整设定来改善');
+	});
 
 	/**
 	 * Gets the timestamp of the number of milliseconds that have elapsed since

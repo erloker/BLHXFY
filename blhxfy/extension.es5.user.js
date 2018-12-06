@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.4
+// @version      1.3.5
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8362,7 +8362,7 @@
     return str;
   };
 
-  var version = "1.3.4";
+  var version = "1.3.5";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -17208,6 +17208,10 @@
   };
 
   keepBgm();
+
+  window.addEventListener('load', function () {
+    $('.prt-global-ext .prt-config-balloon').html('感觉卡顿的时候，可以通过调整设定来改善');
+  });
 
   /**
    * Gets the timestamp of the number of milliseconds that have elapsed since
