@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.5
+// @version      1.3.6
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5709,7 +5709,7 @@
 	  return str;
 	};
 
-	var version = "1.3.5";
+	var version = "1.3.6";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -11622,15 +11622,25 @@ ${extraHtml}
 
 	    if (data.master) {
 	      const trans = skillData['npc'];
-	      if (trans && trans.name) data.master.name = trans.name;
+
+	      if (trans && trans.name) {
+	        data.master.name = trans.name;
+	        const intro = skillData['intro'];
+	        if (intro && intro.name) data.master.evo_name = `[${intro.name}]${trans.name}`;
+	      }
 	    } else if (data.name) {
 	      const trans = skillData['npc'];
-	      if (trans) data.name = trans.name;
+
+	      if (trans && trans.name) {
+	        data.name = trans.name;
+	        const intro = skillData['intro'];
+	        if (intro && intro.name) data.evo_name = `[${intro.name}]${trans.name}`;
+	      }
 	    }
 
 	    if (data.comment) {
 	      const trans = skillData['intro'];
-	      if (trans) data.comment = trans.detail;
+	      if (trans && trans.detail) data.comment = trans.detail;
 	    }
 	  }
 

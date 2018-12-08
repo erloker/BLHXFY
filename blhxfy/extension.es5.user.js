@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.5
+// @version      1.3.6
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8362,7 +8362,7 @@
     return str;
   };
 
-  var version = "1.3.5";
+  var version = "1.3.6";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -14901,7 +14901,7 @@
     var _ref3 = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee2(data, pathname) {
-      var npcId, skillState, skillData, translated, keys, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, item, key1, key2, ability, _getPlusStr, _getPlusStr2, plus1, plus2, _trans4, trans, _trans2, _trans3;
+      var npcId, skillState, skillData, translated, keys, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, item, key1, key2, ability, _getPlusStr, _getPlusStr2, plus1, plus2, _trans4, trans, intro, _trans2, _intro, _trans3;
 
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -15096,15 +15096,25 @@
             case 68:
               if (data.master) {
                 trans = skillData['npc'];
-                if (trans && trans.name) data.master.name = trans.name;
+
+                if (trans && trans.name) {
+                  data.master.name = trans.name;
+                  intro = skillData['intro'];
+                  if (intro && intro.name) data.master.evo_name = "[".concat(intro.name, "]").concat(trans.name);
+                }
               } else if (data.name) {
                 _trans2 = skillData['npc'];
-                if (_trans2) data.name = _trans2.name;
+
+                if (_trans2 && _trans2.name) {
+                  data.name = _trans2.name;
+                  _intro = skillData['intro'];
+                  if (_intro && _intro.name) data.evo_name = "[".concat(_intro.name, "]").concat(_trans2.name);
+                }
               }
 
               if (data.comment) {
                 _trans3 = skillData['intro'];
-                if (_trans3) data.comment = _trans3.detail;
+                if (_trans3 && _trans3.detail) data.comment = _trans3.detail;
               }
 
             case 70:

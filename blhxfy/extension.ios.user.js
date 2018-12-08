@@ -5693,7 +5693,7 @@
 	  return str;
 	};
 
-	var version = "1.3.5";
+	var version = "1.3.6";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -11606,15 +11606,25 @@ ${extraHtml}
 
 	    if (data.master) {
 	      const trans = skillData['npc'];
-	      if (trans && trans.name) data.master.name = trans.name;
+
+	      if (trans && trans.name) {
+	        data.master.name = trans.name;
+	        const intro = skillData['intro'];
+	        if (intro && intro.name) data.master.evo_name = `[${intro.name}]${trans.name}`;
+	      }
 	    } else if (data.name) {
 	      const trans = skillData['npc'];
-	      if (trans) data.name = trans.name;
+
+	      if (trans && trans.name) {
+	        data.name = trans.name;
+	        const intro = skillData['intro'];
+	        if (intro && intro.name) data.evo_name = `[${intro.name}]${trans.name}`;
+	      }
 	    }
 
 	    if (data.comment) {
 	      const trans = skillData['intro'];
-	      if (trans) data.comment = trans.detail;
+	      if (trans && trans.detail) data.comment = trans.detail;
 	    }
 	  }
 
