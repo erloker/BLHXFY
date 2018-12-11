@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.6
+// @version      1.3.7
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5709,7 +5709,7 @@
 	  return str;
 	};
 
-	var version = "1.3.6";
+	var version = "1.3.7";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -11141,7 +11141,7 @@ ${extraHtml}
 	        obj[info.type] = transList[index] || '';
 
 	        if (!transNotice && info.type === 'detail' && obj[info.type]) {
-	          obj[info.type] = `（本节由<a target="_blank" style="color:#9ccd4e" href="${apiData[1]}">${apiData[0]}</a>机翻）<br>${obj[info.type]}`;
+	          obj[info.type] = `(本节由<a target="_blank" style="color:#9ccd4e" href="${apiData[1]}">${apiData[0]}</a>机翻，点右上Log设置关闭)<br>${obj[info.type]}`;
 	          transNotice = true;
 	        }
 
