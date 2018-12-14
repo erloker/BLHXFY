@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.7
+// @version      1.3.8
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -7942,9 +7942,15 @@
     return html;
   };
 
+  var removeHtmlTagCount = 0;
+
   var removeHtmlTag = function removeHtmlTag(str) {
-    if (!/<[^>]{1,10}>/.test(str)) return str;
-    return str.replace(/<br\s?\/?>/g, '').replace(/<(\w{1,7})[^>]*>([^<]*)<\/\1>/g, '$2');
+    removeHtmlTagCount++;
+    if (!/<(\w{1,7})[^>]*>/.test(str) || removeHtmlTagCount > 2) return str;
+
+    var _str = str.replace(/<br\s?\/?>/g, '').replace(/<(\w{1,7})[^>]*>([^<]*)<\/\1>/g, '$2');
+
+    return removeHtmlTag(_str);
   };
 
   var replaceWords = function replaceWords(str, map) {
@@ -8362,7 +8368,7 @@
     return str;
   };
 
-  var version = "1.3.7";
+  var version = "1.3.8";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
