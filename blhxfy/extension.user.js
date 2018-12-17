@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.9
+// @version      1.3.10
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5713,7 +5713,7 @@
 	  return str;
 	};
 
-	var version = "1.3.9";
+	var version = "1.3.10";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -10808,7 +10808,7 @@ ${extraHtml}
 	};
 
 	const caiyunTrans = async (keyword, lang = 'en') => {
-	  const source = keyword.replace(/─/g, '—').replace(/何故/g, 'なぜ').split('\n');
+	  const source = keyword.split('\n');
 	  const from = lang === 'en' ? 'en' : 'ja';
 	  const data = {
 	    detect: true,
@@ -10846,7 +10846,7 @@ ${extraHtml}
 	  }
 	}
 
-	const txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+	const txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt', 'sel5_txt', 'sel6_txt'];
 	const WORDS_LIMIT = 4500;
 	const scenarioCache = {
 	  data: null,
@@ -10925,6 +10925,8 @@ ${extraHtml}
 	      }
 
 	      txt = replaceWords(txt, nounMap, lang);
+	    } else if (config.transApi === 'caiyun') {
+	      txt = txt.replace(/─/g, '—').replace(/何故/g, 'なぜ').replace(/ビィ/g, '碧').replace(/Vyrn\b/g, 'Bj');
 	    }
 
 	    if (userName) {
@@ -10933,7 +10935,7 @@ ${extraHtml}
 
 	      if (lang === 'en') {
 	        txt = replaceWords(txt, new Map([[userName, config.defaultEnName]]), _lang);
-	      } else {
+	      } else if (config.transApi !== 'google') {
 	        txt = replaceWords(txt, new Map([[userName, config.defaultName]]), _lang);
 	      }
 	    }
@@ -12240,7 +12242,7 @@ ${extraHtml}
 
 	  let _text = text;
 
-	  if (config.userName && config.userName !== '姬塔') {
+	  if (config.userName && (config.userName !== '姬塔' || config.userName !== '古兰')) {
 	    _text = _text.replace(/团长/g, config.userName);
 	  }
 
@@ -12977,7 +12979,7 @@ ${extraHtml}
 
 	const dbSetting = debounce_1(setting, 500);
 
-	const txtKeys$1 = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+	const txtKeys$1 = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt', 'sel5_txt', 'sel6_txt'];
 
 	const replaceName = (content, userName) => {
 	  if (userName) {

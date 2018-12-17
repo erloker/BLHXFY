@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.9
+// @version      1.3.10
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8367,7 +8367,7 @@
     return str;
   };
 
-  var version = "1.3.9";
+  var version = "1.3.10";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -13362,7 +13362,7 @@
           switch (_context2.prev = _context2.next) {
             case 0:
               lang = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : 'en';
-              source = keyword.replace(/─/g, '—').replace(/何故/g, 'なぜ').split('\n');
+              source = keyword.split('\n');
               from = lang === 'en' ? 'en' : 'ja';
               data = {
                 detect: true,
@@ -13447,7 +13447,7 @@
     return _ref3.apply(this, arguments);
   }
 
-  var txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+  var txtKeys = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt', 'sel5_txt', 'sel6_txt'];
   var WORDS_LIMIT = 4500;
   var scenarioCache = {
     data: null,
@@ -13539,6 +13539,8 @@
                   }
 
                   txt = replaceWords(txt, nounMap, lang);
+                } else if (config.transApi === 'caiyun') {
+                  txt = txt.replace(/─/g, '—').replace(/何故/g, 'なぜ').replace(/ビィ/g, '碧').replace(/Vyrn\b/g, 'Bj');
                 }
 
                 if (userName) {
@@ -13547,7 +13549,7 @@
 
                   if (lang === 'en') {
                     txt = replaceWords(txt, new Map([[userName, config.defaultEnName]]), _lang);
-                  } else {
+                  } else if (config.transApi !== 'google') {
                     txt = replaceWords(txt, new Map([[userName, config.defaultName]]), _lang);
                   }
                 }
@@ -16569,7 +16571,7 @@
 
     var _text = text;
 
-    if (config.userName && config.userName !== '姬塔') {
+    if (config.userName && (config.userName !== '姬塔' || config.userName !== '古兰')) {
       _text = _text.replace(/团长/g, config.userName);
     }
 
@@ -17609,7 +17611,7 @@
 
   var dbSetting = debounce_1(setting, 500);
 
-  var txtKeys$1 = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt'];
+  var txtKeys$1 = ['chapter_name', 'synopsis', 'detail', 'sel1_txt', 'sel2_txt', 'sel3_txt', 'sel4_txt', 'sel5_txt', 'sel6_txt'];
 
   var replaceName = function replaceName(content, userName) {
     if (userName) {
