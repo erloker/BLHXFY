@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.11
+// @version      1.3.12
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5713,7 +5713,7 @@
 	  return str;
 	};
 
-	var version = "1.3.11";
+	var version = "1.3.12";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -10872,25 +10872,43 @@ ${extraHtml}
 	  const txtList = [];
 	  const infoList = [];
 
-	  const getTxt = (obj, key) => {
+	  const getTxt = (obj, key, index) => {
 	    const txt = obj[key];
 
 	    if (txt) {
 	      txtList.push(txt.replace(/\n/g, '').trim());
 	      infoList.push({
 	        id: obj.id,
-	        type: key
+	        type: key,
+	        index
 	      });
 	    }
 	  };
 
-	  data.forEach(item => {
-	    txtKeys.forEach(key => getTxt(item, key));
+	  data.forEach((item, index) => {
+	    txtKeys.forEach(key => getTxt(item, key, index));
 	  });
 	  return {
 	    txtList,
 	    infoList
 	  };
+	};
+
+	const getStartIndex = data => {
+	  const findStart = (item, index) => {
+	    if (!item) return false;
+
+	    if (item.detail) {
+	      return index;
+	    } else if (item.next) {
+	      const next = item.next | 0 || -1;
+	      return findStart(data[next], next);
+	    } else {
+	      return findStart(data[index + 1], index + 1);
+	    }
+	  };
+
+	  return findStart(data[0], 0);
 	};
 
 	const transMulti = async (list, nameMap, nounMap, nounFixMap) => {
@@ -11135,6 +11153,7 @@ ${extraHtml}
 	        txtList,
 	        infoList
 	      } = collectTxt(data);
+	      const startIndex = getStartIndex(data);
 	      const transList = await transMulti(txtList, nameMap, nounMap, nounFixMap);
 	      let transNotice = false;
 	      const transApiName = {
@@ -11146,7 +11165,7 @@ ${extraHtml}
 	        const obj = transMap.get(info.id) || {};
 	        obj[info.type] = transList[index] || '';
 
-	        if (!transNotice && info.type === 'detail' && obj[info.type]) {
+	        if (!transNotice && info.index === startIndex) {
 	          obj[info.type] = `(本节由<a target="_blank" style="color:#9ccd4e" href="${apiData[1]}">${apiData[0]}</a>机翻，点右上Log设置关闭)<br>${obj[info.type]}`;
 	          transNotice = true;
 	        }

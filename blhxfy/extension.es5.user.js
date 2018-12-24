@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.11
+// @version      1.3.12
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8367,7 +8367,7 @@
     return str;
   };
 
-  var version = "1.3.11";
+  var version = "1.3.12";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -13473,27 +13473,45 @@
     var txtList = [];
     var infoList = [];
 
-    var getTxt = function getTxt(obj, key) {
+    var getTxt = function getTxt(obj, key, index) {
       var txt = obj[key];
 
       if (txt) {
         txtList.push(txt.replace(/\n/g, '').trim());
         infoList.push({
           id: obj.id,
-          type: key
+          type: key,
+          index: index
         });
       }
     };
 
-    data.forEach(function (item) {
+    data.forEach(function (item, index) {
       txtKeys.forEach(function (key) {
-        return getTxt(item, key);
+        return getTxt(item, key, index);
       });
     });
     return {
       txtList: txtList,
       infoList: infoList
     };
+  };
+
+  var getStartIndex = function getStartIndex(data) {
+    var findStart = function findStart(item, index) {
+      if (!item) return false;
+
+      if (item.detail) {
+        return index;
+      } else if (item.next) {
+        var next = item.next | 0 || -1;
+        return findStart(data[next], next);
+      } else {
+        return findStart(data[index + 1], index + 1);
+      }
+    };
+
+    return findStart(data[0], 0);
   };
 
   var transMulti =
@@ -13815,7 +13833,7 @@
     var _ref3 = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee3(data, pathname) {
-      var pathRst, sNameTemp, rst, scenarioName, _ref4, transMap, csv, nameData, nameMap, _ref5, nounMap, nounFixMap, _collectTxt, txtList, infoList, transList, transNotice, transApiName, apiData;
+      var pathRst, sNameTemp, rst, scenarioName, _ref4, transMap, csv, nameData, nameMap, _ref5, nounMap, nounFixMap, _collectTxt, txtList, infoList, startIndex, transList, transNotice, transApiName, apiData;
 
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -13874,12 +13892,12 @@
               scenarioCache.nameMap = nameMap;
 
               if (transMap) {
-                _context3.next = 47;
+                _context3.next = 48;
                 break;
               }
 
               if (!(config.transJa && Game.lang === 'ja' || config.transEn && Game.lang === 'en')) {
-                _context3.next = 44;
+                _context3.next = 45;
                 break;
               }
 
@@ -13892,10 +13910,11 @@
               nounFixMap = _ref5.nounFixMap;
               transMap = new Map();
               _collectTxt = collectTxt(data), txtList = _collectTxt.txtList, infoList = _collectTxt.infoList;
-              _context3.next = 37;
+              startIndex = getStartIndex(data);
+              _context3.next = 38;
               return transMulti(txtList, nameMap, nounMap, nounFixMap);
 
-            case 37:
+            case 38:
               transList = _context3.sent;
               transNotice = false;
               transApiName = {
@@ -13907,29 +13926,29 @@
                 var obj = transMap.get(info.id) || {};
                 obj[info.type] = transList[index] || '';
 
-                if (!transNotice && info.type === 'detail' && obj[info.type]) {
+                if (!transNotice && info.index === startIndex) {
                   obj[info.type] = "(\u672C\u8282\u7531<a target=\"_blank\" style=\"color:#9ccd4e\" href=\"".concat(apiData[1], "\">").concat(apiData[0], "</a>\u673A\u7FFB\uFF0C\u70B9\u53F3\u4E0ALog\u8BBE\u7F6E\u5173\u95ED)<br>").concat(obj[info.type]);
                   transNotice = true;
                 }
 
                 transMap.set(info.id, obj);
               });
-              _context3.next = 45;
+              _context3.next = 46;
               break;
-
-            case 44:
-              return _context3.abrupt("return", data);
 
             case 45:
-              _context3.next = 50;
+              return _context3.abrupt("return", data);
+
+            case 46:
+              _context3.next = 51;
               break;
 
-            case 47:
+            case 48:
               scenarioCache.hasTrans = true;
               scenarioCache.csv = csv;
               scenarioCache.transMap = transMap;
 
-            case 50:
+            case 51:
               data.forEach(function (item) {
                 var name1, name2, name3;
                 name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -13945,7 +13964,7 @@
               });
               return _context3.abrupt("return", data);
 
-            case 52:
+            case 53:
             case "end":
               return _context3.stop();
           }
