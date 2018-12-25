@@ -5697,7 +5697,7 @@
 	  return str;
 	};
 
-	var version = "1.3.12";
+	var version = "1.3.13";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -10415,7 +10415,7 @@ ${extraHtml}
 	    data
 	  } = option;
 	  return new Promise((rev, rej) => {
-	    if (!CROSS_DOMAIN_REQ) return rej('need tampermonkey to send request');
+	    if (!CROSS_DOMAIN_REQ) return rej('GM_XHR MISSING');
 	    window.GM_xmlhttpRequest({
 	      method,
 	      url,
@@ -10786,7 +10786,10 @@ ${extraHtml}
 	    const txt = getTransResult(res);
 	    return txt;
 	  } catch (err) {
-	    console.error(`${err.message}\n${err.stack}`);
+	    if (err !== 'GM_XHR MISSING') {
+	      console.error(`${err.message}\n${err.stack}`);
+	    }
+
 	    return '';
 	  }
 	};
@@ -10817,7 +10820,10 @@ ${extraHtml}
 	    const txt = res.target.join('\n');
 	    return txt;
 	  } catch (err) {
-	    console.error(`${err.message}\n${err.stack}`);
+	    if (err !== 'GM_XHR MISSING') {
+	      console.error(`${err.message}\n${err.stack}`);
+	    }
+
 	    return '';
 	  }
 	};
@@ -11149,7 +11155,7 @@ ${extraHtml}
 	        const obj = transMap.get(info.id) || {};
 	        obj[info.type] = transList[index] || '';
 
-	        if (!transNotice && info.index === startIndex) {
+	        if (!transNotice && info.index === startIndex && info.type === 'detail' && transList.length > 0) {
 	          obj[info.type] = `(本节由<a target="_blank" style="color:#9ccd4e" href="${apiData[1]}">${apiData[0]}</a>机翻，点右上Log设置关闭)<br>${obj[info.type]}`;
 	          transNotice = true;
 	        }

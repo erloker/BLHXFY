@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.12
+// @version      1.3.13
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8367,7 +8367,7 @@
     return str;
   };
 
-  var version = "1.3.12";
+  var version = "1.3.13";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -12934,7 +12934,7 @@
         responseType = _option$responseType === void 0 ? 'json' : _option$responseType,
         data = option.data;
     return new Promise(function (rev, rej) {
-      if (!CROSS_DOMAIN_REQ) return rej('need tampermonkey to send request');
+      if (!CROSS_DOMAIN_REQ) return rej('GM_XHR MISSING');
       window.GM_xmlhttpRequest({
         method: method,
         url: url,
@@ -13328,7 +13328,11 @@
             case 14:
               _context.prev = 14;
               _context.t0 = _context["catch"](6);
-              console.error("".concat(_context.t0.message, "\n").concat(_context.t0.stack));
+
+              if (_context.t0 !== 'GM_XHR MISSING') {
+                console.error("".concat(_context.t0.message, "\n").concat(_context.t0.stack));
+              }
+
               return _context.abrupt("return", '');
 
             case 18:
@@ -13393,7 +13397,11 @@
             case 12:
               _context2.prev = 12;
               _context2.t0 = _context2["catch"](4);
-              console.error("".concat(_context2.t0.message, "\n").concat(_context2.t0.stack));
+
+              if (_context2.t0 !== 'GM_XHR MISSING') {
+                console.error("".concat(_context2.t0.message, "\n").concat(_context2.t0.stack));
+              }
+
               return _context2.abrupt("return", '');
 
             case 16:
@@ -13926,7 +13934,7 @@
                 var obj = transMap.get(info.id) || {};
                 obj[info.type] = transList[index] || '';
 
-                if (!transNotice && info.index === startIndex) {
+                if (!transNotice && info.index === startIndex && info.type === 'detail' && transList.length > 0) {
                   obj[info.type] = "(\u672C\u8282\u7531<a target=\"_blank\" style=\"color:#9ccd4e\" href=\"".concat(apiData[1], "\">").concat(apiData[0], "</a>\u673A\u7FFB\uFF0C\u70B9\u53F3\u4E0ALog\u8BBE\u7F6E\u5173\u95ED)<br>").concat(obj[info.type]);
                   transNotice = true;
                 }
