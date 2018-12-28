@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.4.0
+// @version      1.5.0
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5713,7 +5713,7 @@
 	  return str;
 	};
 
-	var version = "1.4.0";
+	var version = "1.5.0";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -10435,15 +10435,29 @@ ${extraHtml}
 
 	const CROSS_DOMAIN_REQ = !!window.GM_xmlhttpRequest;
 
-	const request = (url, option) => {
+	const request = (url, option, type) => {
 	  const {
 	    method = 'GET',
 	    headers,
 	    responseType = 'json',
 	    data
 	  } = option;
+
+	  if (!CROSS_DOMAIN_REQ && type === 'caiyun') {
+	    return fetch(url, {
+	      body: data,
+	      headers,
+	      method,
+	      mode: 'cors',
+	      referrer: 'no-referrer'
+	    }).then(res => res.json());
+	  }
+
 	  return new Promise((rev, rej) => {
-	    if (!CROSS_DOMAIN_REQ) return rej('GM_XHR MISSING');
+	    if (!CROSS_DOMAIN_REQ) {
+	      return rej('GM_XHR MISSING');
+	    }
+
 	    window.GM_xmlhttpRequest({
 	      method,
 	      url,
@@ -10844,7 +10858,7 @@ ${extraHtml}
 	        'origin': 'http://www.caiyunapp.com',
 	        'X-Authorization': 'token cy4fgbil24jucmh8jfr5'
 	      }
-	    });
+	    }, 'caiyun');
 	    const txt = res.target.join('\n');
 	    return txt;
 	  } catch (err) {
@@ -10935,7 +10949,10 @@ ${extraHtml}
 	  const txtStr = [];
 	  const userName = config.userName;
 	  const lang = Game.lang;
-	  list.forEach(txt => {
+
+	  const _list = removeHtmlTag(list.join('\n')).split('\n');
+
+	  _list.forEach(txt => {
 	    strTemp += txt;
 	    count += new Blob([txt]).size;
 
@@ -10953,8 +10970,6 @@ ${extraHtml}
 	  }
 
 	  const transStr = await Promise.all(txtStr.map(txt => {
-	    txt = removeHtmlTag(txt);
-
 	    if (config.transApi === 'google') {
 	      if (lang === 'en') {
 	        txt = replaceWords(txt, nameMap, lang);
@@ -10990,7 +11005,7 @@ ${extraHtml}
 
 	      if (config.displayName || userName) {
 	        const name = config.displayName || userName;
-	        _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
+	        _str = _str.replace(new RegExp(`${config.defaultName}(先生|小姐)?`, 'g'), name);
 	      }
 
 	      return result.concat(_str.split('\n'));

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.4.0
+// @version      1.5.0
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -5671,99 +5671,6 @@
   // 24.3.3 JSON[@@toStringTag]
   _setToStringTag(_global.JSON, 'JSON', true);
 
-  var _fixReWks = function (KEY, length, exec) {
-    var SYMBOL = _wks(KEY);
-    var fns = exec(_defined, SYMBOL, ''[KEY]);
-    var strfn = fns[0];
-    var rxfn = fns[1];
-    if (_fails(function () {
-      var O = {};
-      O[SYMBOL] = function () { return 7; };
-      return ''[KEY](O) != 7;
-    })) {
-      _redefine(String.prototype, KEY, strfn);
-      _hide(RegExp.prototype, SYMBOL, length == 2
-        // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
-        // 21.2.5.11 RegExp.prototype[@@split](string, limit)
-        ? function (string, arg) { return rxfn.call(string, this, arg); }
-        // 21.2.5.6 RegExp.prototype[@@match](string)
-        // 21.2.5.9 RegExp.prototype[@@search](string)
-        : function (string) { return rxfn.call(string, this); }
-      );
-    }
-  };
-
-  // @@split logic
-  _fixReWks('split', 2, function (defined, SPLIT, $split) {
-    var isRegExp = _isRegexp;
-    var _split = $split;
-    var $push = [].push;
-    var $SPLIT = 'split';
-    var LENGTH = 'length';
-    var LAST_INDEX = 'lastIndex';
-    if (
-      'abbc'[$SPLIT](/(b)*/)[1] == 'c' ||
-      'test'[$SPLIT](/(?:)/, -1)[LENGTH] != 4 ||
-      'ab'[$SPLIT](/(?:ab)*/)[LENGTH] != 2 ||
-      '.'[$SPLIT](/(.?)(.?)/)[LENGTH] != 4 ||
-      '.'[$SPLIT](/()()/)[LENGTH] > 1 ||
-      ''[$SPLIT](/.?/)[LENGTH]
-    ) {
-      var NPCG = /()??/.exec('')[1] === undefined; // nonparticipating capturing group
-      // based on es5-shim implementation, need to rework it
-      $split = function (separator, limit) {
-        var string = String(this);
-        if (separator === undefined && limit === 0) return [];
-        // If `separator` is not a regex, use native split
-        if (!isRegExp(separator)) return _split.call(string, separator, limit);
-        var output = [];
-        var flags = (separator.ignoreCase ? 'i' : '') +
-                    (separator.multiline ? 'm' : '') +
-                    (separator.unicode ? 'u' : '') +
-                    (separator.sticky ? 'y' : '');
-        var lastLastIndex = 0;
-        var splitLimit = limit === undefined ? 4294967295 : limit >>> 0;
-        // Make `global` and avoid `lastIndex` issues by working with a copy
-        var separatorCopy = new RegExp(separator.source, flags + 'g');
-        var separator2, match, lastIndex, lastLength, i;
-        // Doesn't need flags gy, but they don't hurt
-        if (!NPCG) separator2 = new RegExp('^' + separatorCopy.source + '$(?!\\s)', flags);
-        while (match = separatorCopy.exec(string)) {
-          // `separatorCopy.lastIndex` is not reliable cross-browser
-          lastIndex = match.index + match[0][LENGTH];
-          if (lastIndex > lastLastIndex) {
-            output.push(string.slice(lastLastIndex, match.index));
-            // Fix browsers whose `exec` methods don't consistently return `undefined` for NPCG
-            // eslint-disable-next-line no-loop-func
-            if (!NPCG && match[LENGTH] > 1) match[0].replace(separator2, function () {
-              for (i = 1; i < arguments[LENGTH] - 2; i++) if (arguments[i] === undefined) match[i] = undefined;
-            });
-            if (match[LENGTH] > 1 && match.index < string[LENGTH]) $push.apply(output, match.slice(1));
-            lastLength = match[0][LENGTH];
-            lastLastIndex = lastIndex;
-            if (output[LENGTH] >= splitLimit) break;
-          }
-          if (separatorCopy[LAST_INDEX] === match.index) separatorCopy[LAST_INDEX]++; // Avoid an infinite loop
-        }
-        if (lastLastIndex === string[LENGTH]) {
-          if (lastLength || !separatorCopy.test('')) output.push('');
-        } else output.push(string.slice(lastLastIndex));
-        return output[LENGTH] > splitLimit ? output.slice(0, splitLimit) : output;
-      };
-    // Chakra, V8
-    } else if ('0'[$SPLIT](undefined, 0)[LENGTH]) {
-      $split = function (separator, limit) {
-        return separator === undefined && limit === 0 ? [] : _split.call(this, separator, limit);
-      };
-    }
-    // 21.1.3.17 String.prototype.split(separator, limit)
-    return [function split(separator, limit) {
-      var O = defined(this);
-      var fn = separator == undefined ? undefined : separator[SPLIT];
-      return fn !== undefined ? fn.call(separator, O, limit) : $split.call(String(O), separator, limit);
-    }, $split];
-  });
-
   var SPECIES$1 = _wks('species');
 
   var _setSpecies = function (KEY) {
@@ -6470,6 +6377,99 @@
       if (result.e) reject(result.v);
       return capability.promise;
     }
+  });
+
+  var _fixReWks = function (KEY, length, exec) {
+    var SYMBOL = _wks(KEY);
+    var fns = exec(_defined, SYMBOL, ''[KEY]);
+    var strfn = fns[0];
+    var rxfn = fns[1];
+    if (_fails(function () {
+      var O = {};
+      O[SYMBOL] = function () { return 7; };
+      return ''[KEY](O) != 7;
+    })) {
+      _redefine(String.prototype, KEY, strfn);
+      _hide(RegExp.prototype, SYMBOL, length == 2
+        // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
+        // 21.2.5.11 RegExp.prototype[@@split](string, limit)
+        ? function (string, arg) { return rxfn.call(string, this, arg); }
+        // 21.2.5.6 RegExp.prototype[@@match](string)
+        // 21.2.5.9 RegExp.prototype[@@search](string)
+        : function (string) { return rxfn.call(string, this); }
+      );
+    }
+  };
+
+  // @@split logic
+  _fixReWks('split', 2, function (defined, SPLIT, $split) {
+    var isRegExp = _isRegexp;
+    var _split = $split;
+    var $push = [].push;
+    var $SPLIT = 'split';
+    var LENGTH = 'length';
+    var LAST_INDEX = 'lastIndex';
+    if (
+      'abbc'[$SPLIT](/(b)*/)[1] == 'c' ||
+      'test'[$SPLIT](/(?:)/, -1)[LENGTH] != 4 ||
+      'ab'[$SPLIT](/(?:ab)*/)[LENGTH] != 2 ||
+      '.'[$SPLIT](/(.?)(.?)/)[LENGTH] != 4 ||
+      '.'[$SPLIT](/()()/)[LENGTH] > 1 ||
+      ''[$SPLIT](/.?/)[LENGTH]
+    ) {
+      var NPCG = /()??/.exec('')[1] === undefined; // nonparticipating capturing group
+      // based on es5-shim implementation, need to rework it
+      $split = function (separator, limit) {
+        var string = String(this);
+        if (separator === undefined && limit === 0) return [];
+        // If `separator` is not a regex, use native split
+        if (!isRegExp(separator)) return _split.call(string, separator, limit);
+        var output = [];
+        var flags = (separator.ignoreCase ? 'i' : '') +
+                    (separator.multiline ? 'm' : '') +
+                    (separator.unicode ? 'u' : '') +
+                    (separator.sticky ? 'y' : '');
+        var lastLastIndex = 0;
+        var splitLimit = limit === undefined ? 4294967295 : limit >>> 0;
+        // Make `global` and avoid `lastIndex` issues by working with a copy
+        var separatorCopy = new RegExp(separator.source, flags + 'g');
+        var separator2, match, lastIndex, lastLength, i;
+        // Doesn't need flags gy, but they don't hurt
+        if (!NPCG) separator2 = new RegExp('^' + separatorCopy.source + '$(?!\\s)', flags);
+        while (match = separatorCopy.exec(string)) {
+          // `separatorCopy.lastIndex` is not reliable cross-browser
+          lastIndex = match.index + match[0][LENGTH];
+          if (lastIndex > lastLastIndex) {
+            output.push(string.slice(lastLastIndex, match.index));
+            // Fix browsers whose `exec` methods don't consistently return `undefined` for NPCG
+            // eslint-disable-next-line no-loop-func
+            if (!NPCG && match[LENGTH] > 1) match[0].replace(separator2, function () {
+              for (i = 1; i < arguments[LENGTH] - 2; i++) if (arguments[i] === undefined) match[i] = undefined;
+            });
+            if (match[LENGTH] > 1 && match.index < string[LENGTH]) $push.apply(output, match.slice(1));
+            lastLength = match[0][LENGTH];
+            lastLastIndex = lastIndex;
+            if (output[LENGTH] >= splitLimit) break;
+          }
+          if (separatorCopy[LAST_INDEX] === match.index) separatorCopy[LAST_INDEX]++; // Avoid an infinite loop
+        }
+        if (lastLastIndex === string[LENGTH]) {
+          if (lastLength || !separatorCopy.test('')) output.push('');
+        } else output.push(string.slice(lastLastIndex));
+        return output[LENGTH] > splitLimit ? output.slice(0, splitLimit) : output;
+      };
+    // Chakra, V8
+    } else if ('0'[$SPLIT](undefined, 0)[LENGTH]) {
+      $split = function (separator, limit) {
+        return separator === undefined && limit === 0 ? [] : _split.call(this, separator, limit);
+      };
+    }
+    // 21.1.3.17 String.prototype.split(separator, limit)
+    return [function split(separator, limit) {
+      var O = defined(this);
+      var fn = separator == undefined ? undefined : separator[SPLIT];
+      return fn !== undefined ? fn.call(separator, O, limit) : $split.call(String(O), separator, limit);
+    }, $split];
   });
 
   // @@replace logic
@@ -8367,7 +8367,7 @@
     return str;
   };
 
-  var version = "1.4.0";
+  var version = "1.5.0";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -12942,15 +12942,31 @@
 
   var CROSS_DOMAIN_REQ = !!window.GM_xmlhttpRequest;
 
-  var request = function request(url, option) {
+  var request = function request(url, option, type) {
     var _option$method = option.method,
         method = _option$method === void 0 ? 'GET' : _option$method,
         headers = option.headers,
         _option$responseType = option.responseType,
         responseType = _option$responseType === void 0 ? 'json' : _option$responseType,
         data = option.data;
+
+    if (!CROSS_DOMAIN_REQ && type === 'caiyun') {
+      return fetch(url, {
+        body: data,
+        headers: headers,
+        method: method,
+        mode: 'cors',
+        referrer: 'no-referrer'
+      }).then(function (res) {
+        return res.json();
+      });
+    }
+
     return new Promise(function (rev, rej) {
-      if (!CROSS_DOMAIN_REQ) return rej('GM_XHR MISSING');
+      if (!CROSS_DOMAIN_REQ) {
+        return rej('GM_XHR MISSING');
+      }
+
       window.GM_xmlhttpRequest({
         method: method,
         url: url,
@@ -13403,7 +13419,7 @@
                   'origin': 'http://www.caiyunapp.com',
                   'X-Authorization': 'token cy4fgbil24jucmh8jfr5'
                 }
-              });
+              }, 'caiyun');
 
             case 7:
               res = _context2.sent;
@@ -13544,7 +13560,8 @@
     var _ref = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee(list, nameMap, nounMap, nounFixMap, caiyunPrefixMap) {
-      var count, strTemp, txtStr, userName, lang, transStr;
+      var count, strTemp, txtStr, userName, lang, _list, transStr;
+
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
@@ -13554,7 +13571,9 @@
               txtStr = [];
               userName = config.userName;
               lang = Game.lang;
-              list.forEach(function (txt) {
+              _list = removeHtmlTag(list.join('\n')).split('\n');
+
+              _list.forEach(function (txt) {
                 strTemp += txt;
                 count += new Blob([txt]).size;
 
@@ -13571,10 +13590,8 @@
                 txtStr.push(strTemp);
               }
 
-              _context.next = 9;
+              _context.next = 10;
               return Promise.all(txtStr.map(function (txt) {
-                txt = removeHtmlTag(txt);
-
                 if (config.transApi === 'google') {
                   if (lang === 'en') {
                     txt = replaceWords(txt, nameMap, lang);
@@ -13601,7 +13618,7 @@
                 return transApi(txt, lang, targetLang);
               }));
 
-            case 9:
+            case 10:
               transStr = _context.sent;
               return _context.abrupt("return", transStr.reduce(function (result, str) {
                 var _str = str;
@@ -13636,7 +13653,7 @@
 
                   if (config.displayName || userName) {
                     var name = config.displayName || userName;
-                    _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
+                    _str = _str.replace(new RegExp("".concat(config.defaultName, "(\u5148\u751F|\u5C0F\u59D0)?"), 'g'), name);
                   }
 
                   return result.concat(_str.split('\n'));
@@ -13645,7 +13662,7 @@
                 return result;
               }, []));
 
-            case 11:
+            case 12:
             case "end":
               return _context.stop();
           }
