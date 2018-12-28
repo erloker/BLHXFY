@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想翻译兼容版
 // @namespace    https://github.com/biuuu/BLHXFY
-// @version      1.3.13
+// @version      1.4.0
 // @description  碧蓝幻想的汉化脚本，提交新翻译请到 https://github.com/biuuu/BLHXFY
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -8367,7 +8367,7 @@
     return str;
   };
 
-  var version = "1.3.13";
+  var version = "1.4.0";
 
   var config = {
     origin: 'https://blhx.danmu9.com',
@@ -10420,6 +10420,7 @@
   var jpNameMap = new Map();
   var nounMap = new Map();
   var nounFixMap = new Map();
+  var caiyunPrefixMap = new Map();
   var loaded = false;
   var nounLoaded = false;
 
@@ -10522,13 +10523,13 @@
     var _ref2 = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee2() {
-      var noun, nounFix, listNoun, listNounFix;
+      var noun, nounFix, caiyunPrefix, listNoun, listNounFix, listCaiyunPrefix;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
               if (nounLoaded) {
-                _context2.next = 12;
+                _context2.next = 17;
                 break;
               }
 
@@ -10542,8 +10543,14 @@
 
             case 6:
               nounFix = _context2.sent;
+              _context2.next = 9;
+              return fetchWithHash('/blhxfy/data/caiyun-prefix.csv');
+
+            case 9:
+              caiyunPrefix = _context2.sent;
               listNoun = parseCsv(noun);
               listNounFix = parseCsv(nounFix);
+              listCaiyunPrefix = parseCsv(caiyunPrefix);
               sortKeywords(listNoun, 'keyword').forEach(function (item) {
                 var keyword = trim(item.keyword);
                 var trans = filter(trim(item.trans));
@@ -10563,15 +10570,24 @@
                   nounFixMap.set(text, fix);
                 }
               });
+              sortKeywords(listCaiyunPrefix, 'text').forEach(function (item) {
+                var text = trim(item.text);
+                var fix = filter(trim(item.fixed));
+
+                if (text && fix) {
+                  caiyunPrefixMap.set(text, fix);
+                }
+              });
               nounLoaded = true;
 
-            case 12:
+            case 17:
               return _context2.abrupt("return", {
                 nounMap: nounMap,
-                nounFixMap: nounFixMap
+                nounFixMap: nounFixMap,
+                caiyunPrefixMap: caiyunPrefixMap
               });
 
-            case 13:
+            case 18:
             case "end":
               return _context2.stop();
           }
@@ -13527,7 +13543,7 @@
   function () {
     var _ref = _asyncToGenerator(
     /*#__PURE__*/
-    regeneratorRuntime.mark(function _callee(list, nameMap, nounMap, nounFixMap) {
+    regeneratorRuntime.mark(function _callee(list, nameMap, nounMap, nounFixMap, caiyunPrefixMap) {
       var count, strTemp, txtStr, userName, lang, transStr;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -13566,7 +13582,8 @@
 
                   txt = replaceWords(txt, nounMap, lang);
                 } else if (config.transApi === 'caiyun') {
-                  txt = txt.replace(/─/g, '—').replace(/何故/g, 'なぜ').replace(/ビィ/g, '碧').replace(/Vyrn\b/g, 'Bj');
+                  txt = replaceWords(txt, caiyunPrefixMap, lang);
+                  txt = txt.replace(/─/g, '—');
                 }
 
                 if (userName) {
@@ -13619,12 +13636,7 @@
 
                   if (config.displayName || userName) {
                     var name = config.displayName || userName;
-
-                    if (lang === 'en') {
-                      _str = _str.replace(new RegExp(config.defaultEnName, 'g'), name);
-                    } else {
-                      _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
-                    }
+                    _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
                   }
 
                   return result.concat(_str.split('\n'));
@@ -13641,7 +13653,7 @@
       }, _callee, this);
     }));
 
-    return function transMulti(_x, _x2, _x3, _x4) {
+    return function transMulti(_x, _x2, _x3, _x4, _x5) {
       return _ref.apply(this, arguments);
     };
   }();
@@ -13716,7 +13728,7 @@
       }, _callee2, this);
     }));
 
-    return function getScenario(_x5) {
+    return function getScenario(_x6) {
       return _ref2.apply(this, arguments);
     };
   }();
@@ -13841,7 +13853,7 @@
     var _ref3 = _asyncToGenerator(
     /*#__PURE__*/
     regeneratorRuntime.mark(function _callee3(data, pathname) {
-      var pathRst, sNameTemp, rst, scenarioName, _ref4, transMap, csv, nameData, nameMap, _ref5, nounMap, nounFixMap, _collectTxt, txtList, infoList, startIndex, transList, transNotice, transApiName, apiData;
+      var pathRst, sNameTemp, rst, scenarioName, _ref4, transMap, csv, nameData, nameMap, _ref5, nounMap, nounFixMap, caiyunPrefixMap, _collectTxt, txtList, infoList, startIndex, transList, transNotice, transApiName, apiData;
 
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -13900,12 +13912,12 @@
               scenarioCache.nameMap = nameMap;
 
               if (transMap) {
-                _context3.next = 48;
+                _context3.next = 49;
                 break;
               }
 
               if (!(config.transJa && Game.lang === 'ja' || config.transEn && Game.lang === 'en')) {
-                _context3.next = 45;
+                _context3.next = 46;
                 break;
               }
 
@@ -13916,13 +13928,14 @@
               _ref5 = _context3.sent;
               nounMap = _ref5.nounMap;
               nounFixMap = _ref5.nounFixMap;
+              caiyunPrefixMap = _ref5.caiyunPrefixMap;
               transMap = new Map();
               _collectTxt = collectTxt(data), txtList = _collectTxt.txtList, infoList = _collectTxt.infoList;
               startIndex = getStartIndex(data);
-              _context3.next = 38;
-              return transMulti(txtList, nameMap, nounMap, nounFixMap);
+              _context3.next = 39;
+              return transMulti(txtList, nameMap, nounMap, nounFixMap, caiyunPrefixMap);
 
-            case 38:
+            case 39:
               transList = _context3.sent;
               transNotice = false;
               transApiName = {
@@ -13941,22 +13954,22 @@
 
                 transMap.set(info.id, obj);
               });
-              _context3.next = 46;
+              _context3.next = 47;
               break;
-
-            case 45:
-              return _context3.abrupt("return", data);
 
             case 46:
-              _context3.next = 51;
+              return _context3.abrupt("return", data);
+
+            case 47:
+              _context3.next = 52;
               break;
 
-            case 48:
+            case 49:
               scenarioCache.hasTrans = true;
               scenarioCache.csv = csv;
               scenarioCache.transMap = transMap;
 
-            case 51:
+            case 52:
               data.forEach(function (item) {
                 var name1, name2, name3;
                 name1 = replaceChar('charcter1_name', item, nameMap, scenarioName);
@@ -13972,7 +13985,7 @@
               });
               return _context3.abrupt("return", data);
 
-            case 53:
+            case 54:
             case "end":
               return _context3.stop();
           }
@@ -13980,12 +13993,12 @@
       }, _callee3, this);
     }));
 
-    return function transStart(_x6, _x7) {
+    return function transStart(_x7, _x8) {
       return _ref3.apply(this, arguments);
     };
   }();
 
-  function transScenario (_x8, _x9) {
+  function transScenario (_x9, _x10) {
     return _ref6.apply(this, arguments);
   }
 

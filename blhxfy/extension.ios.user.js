@@ -5697,7 +5697,7 @@
 	  return str;
 	};
 
-	var version = "1.3.13";
+	var version = "1.4.0";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
@@ -7673,6 +7673,7 @@
 	const jpNameMap = new Map();
 	const nounMap = new Map();
 	const nounFixMap = new Map();
+	const caiyunPrefixMap = new Map();
 	let loaded = false;
 	let nounLoaded = false;
 
@@ -7738,8 +7739,10 @@
 	  if (!nounLoaded) {
 	    const noun = await fetchWithHash('/blhxfy/data/noun.csv');
 	    const nounFix = await fetchWithHash('/blhxfy/data/noun-fix.csv');
+	    const caiyunPrefix = await fetchWithHash('/blhxfy/data/caiyun-prefix.csv');
 	    const listNoun = parseCsv(noun);
 	    const listNounFix = parseCsv(nounFix);
+	    const listCaiyunPrefix = parseCsv(caiyunPrefix);
 	    sortKeywords(listNoun, 'keyword').forEach(item => {
 	      const keyword = trim(item.keyword);
 	      const trans = filter(trim(item.trans));
@@ -7759,12 +7762,21 @@
 	        nounFixMap.set(text, fix);
 	      }
 	    });
+	    sortKeywords(listCaiyunPrefix, 'text').forEach(item => {
+	      const text = trim(item.text);
+	      const fix = filter(trim(item.fixed));
+
+	      if (text && fix) {
+	        caiyunPrefixMap.set(text, fix);
+	      }
+	    });
 	    nounLoaded = true;
 	  }
 
 	  return {
 	    nounMap,
-	    nounFixMap
+	    nounFixMap,
+	    caiyunPrefixMap
 	  };
 	};
 
@@ -10901,7 +10913,7 @@ ${extraHtml}
 	  return findStart(data[0], 0);
 	};
 
-	const transMulti = async (list, nameMap, nounMap, nounFixMap) => {
+	const transMulti = async (list, nameMap, nounMap, nounFixMap, caiyunPrefixMap) => {
 	  let count = 0;
 	  let strTemp = '';
 	  const txtStr = [];
@@ -10934,7 +10946,8 @@ ${extraHtml}
 
 	      txt = replaceWords(txt, nounMap, lang);
 	    } else if (config.transApi === 'caiyun') {
-	      txt = txt.replace(/─/g, '—').replace(/何故/g, 'なぜ').replace(/ビィ/g, '碧').replace(/Vyrn\b/g, 'Bj');
+	      txt = replaceWords(txt, caiyunPrefixMap, lang);
+	      txt = txt.replace(/─/g, '—');
 	    }
 
 	    if (userName) {
@@ -10961,12 +10974,7 @@ ${extraHtml}
 
 	      if (config.displayName || userName) {
 	        const name = config.displayName || userName;
-
-	        if (lang === 'en') {
-	          _str = _str.replace(new RegExp(config.defaultEnName, 'g'), name);
-	        } else {
-	          _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
-	        }
+	        _str = _str.replace(new RegExp(config.defaultName, 'g'), name);
 	      }
 
 	      return result.concat(_str.split('\n'));
@@ -11136,7 +11144,8 @@ ${extraHtml}
 	    if (config.transJa && Game.lang === 'ja' || config.transEn && Game.lang === 'en') {
 	      const {
 	        nounMap,
-	        nounFixMap
+	        nounFixMap,
+	        caiyunPrefixMap
 	      } = await getNounData();
 	      transMap = new Map();
 	      const {
@@ -11144,7 +11153,7 @@ ${extraHtml}
 	        infoList
 	      } = collectTxt(data);
 	      const startIndex = getStartIndex(data);
-	      const transList = await transMulti(txtList, nameMap, nounMap, nounFixMap);
+	      const transList = await transMulti(txtList, nameMap, nounMap, nounFixMap, caiyunPrefixMap);
 	      let transNotice = false;
 	      const transApiName = {
 	        google: ['Google翻译', 'https://translate.google.cn'],
