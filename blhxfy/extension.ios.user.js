@@ -5697,7 +5697,7 @@
 	  return str;
 	};
 
-	var version = "1.5.0";
+	var version = "1.5.1";
 
 	const config = {
 	  origin: 'https://blhx.danmu9.com',
